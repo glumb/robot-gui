@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+    <title>learningthree.js boiler plate for three.js</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+
+    <script src="vendor/three.js/Three.js"></script>
+    <script src="vendor/three.js/Detector.js"></script>
+    <!-- https://github.com/mrdoob/stats.js -->
+    <script src="vendor/three.js/Stats.js"></script>
+
+    <script src="vendor/threex/THREEx.screenshot.js"></script>
+    <script src="vendor/threex/THREEx.FullScreen.js"></script>
+    <script src="vendor/threex/THREEx.WindowResize.js"></script>
+    <script src="vendor/three.js/OrbitControls.js"></script>
+    <script src="vendor/three.js/TransformControls.js"></script>
+    <script src="js/THREERobot.js"></script>
+    <script src="js/InverseKinematic.js"></script>
+    <script src="js/Servo.js"></script>
+    <script src="js/RobotController.js"></script>
+    <script src="js/Hmi.js"></script>
+    <script src="js/dat.min.js"></script>
+
+
+    <link href="css/main.css" rel="stylesheet"/>
+</head>
+<body>
+<!-- three.js container -->
+<div id="container"></div>
+<!-- info on screen display -->
+
+
+<script type="text/javascript">
+    /**
+     * todo
+     *
+     * detect if linear motion cant be done when angle change > 90 degree
+     * slerp
+     * add waypoints
+     *
+     */
+    var debug = {}
+
+    function init() {
+
+
+        var hmi = new Hmi()
+
+
+
+    }
+    init()
+</script>
+</body>
+</html>
