@@ -1,10 +1,13 @@
 <!doctype html>
 <html>
+
 <head>
     <title>learningthree.js boiler plate for three.js</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
+    <script src="js/require.js" charset="utf-8"></script>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
 
     <script src="vendor/three.js/Three.js"></script>
     <script src="vendor/three.js/Detector.js"></script>
@@ -16,42 +19,62 @@
     <script src="vendor/threex/THREEx.WindowResize.js"></script>
     <script src="vendor/three.js/OrbitControls.js"></script>
     <script src="vendor/three.js/TransformControls.js"></script>
+    <script src="vendor/EventDispatcher.js"></script>
     <script src="js/THREERobot.js"></script>
     <script src="js/InverseKinematic.js"></script>
     <script src="js/Servo.js"></script>
     <script src="js/RobotController.js"></script>
-    <script src="js/Hmi.js"></script>
-    <script src="js/dat.min.js"></script>
+    <!-- <script src="js/dat.gui.min.js"></script> -->
+    <!-- <script src="js/Hmi.js"></script> -->
 
 
-    <link href="css/main.css" rel="stylesheet"/>
+    <link href="css/main.css" rel="stylesheet" />
 </head>
+
 <body>
-<!-- three.js container -->
-<div id="container"></div>
-<!-- info on screen display -->
+    <!-- three.js container -->
+    <div id="container"></div>
+    <!-- info on screen display -->
 
 
-<script type="text/javascript">
-    /**
-     * todo
-     *
-     * detect if linear motion cant be done when angle change > 90 degree
-     * slerp
-     * add waypoints
-     *
-     */
-    var debug = {}
+    <script type="text/javascript">
+        requirejs.config({
+            baseUrl: 'js',
+            // paths: {
+            //     redux: '../node_modules/redux/dist/redux'
+            // }
+        });
 
-    function init() {
+        require(['Hmi'], function(foo) {
+
+        });
+
+        /**
+         * todo
+         *
+         * detect if linear motion cant be done when angle change > 90 degree
+         * slerp
+         * add waypoints
+         *
+         */
+        var debug = {}
+
+        function init() {
 
 
-        var hmi = new Hmi()
+            debug = {}
+
+            // var hmi = new Hmi()
 
 
 
-    }
-    init()
-</script>
+        }
+
+        window.onload = function() {
+
+            init()
+        }
+    </script>
 </body>
+
 </html>

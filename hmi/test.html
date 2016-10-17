@@ -1,185 +1,20 @@
 <!doctype html>
 <html>
+
 <head>
     <title>learningthree.js boiler plate for three.js</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
 
-    <script src="vendor/three.js/Three.js"></script>
-    <script src="vendor/three.js/Detector.js"></script>
-    <!-- https://github.com/mrdoob/stats.js -->
-    <script src="vendor/three.js/Stats.js"></script>
-
-    <script src="vendor/threex/THREEx.screenshot.js"></script>
-    <script src="vendor/threex/THREEx.FullScreen.js"></script>
-    <script src="vendor/threex/THREEx.WindowResize.js"></script>
-    <script src="vendor/three.js/OrbitControls.js"></script>
-    <script src="vendor/three.js/TransformControls.js"></script>
-    <script src="js/THREERobot.js"></script>
-    <script src="js/InverseKinematic.js"></script>
-    <script src="js/Servo.js"></script>
-    <script src="js/RobotController.js"></script>
-    <script src="js/Hmi.js"></script>
-    <script src="js/dat.min.js"></script>
-
-
-    <link href="css/main.css" rel="stylesheet"/>
+<script data-main="js/app" src="js/require.js" charset="utf-8"></script>
 </head>
+
 <body>
-<!-- three.js container -->
-<div id="container"></div>
-<!-- info on screen display -->
 
+    <script type="text/javascript">
 
-<script type="text/javascript">
-    /**
-     * todo
-     *
-     * detect if linear motion cant be done when angle change > 90 degree
-     * slerp
-     * add waypoints
-     *
-     */
-    var debug = {}
-
-    function init() {
-
-
-        var V_initial = [[1, 1, 0], [0, 10, 0], [5, 0, 0], [3, 0, 0], [0, -3, 0], [0, 0, 0]]
-        V_initial = [[4.6, 8, 0], [0, 11.6, 0], [1.5, 2, 0], [11, 0, 0], [0, -3, 0], [0, 0, 0]]
-//                V_initial = [ [ 1, 1, 2 ], [ 0, 10, 0 ], [ 0, 0, -5 ], [ 5, 0, 0 ], [ 0, - 3, 0 ],[ 0, 0, 0 ]  ]
-//                V_initial = [ [ 1, 1, 2 ], [ 0, 10, 0 ], [ 0, 3, -5 ], [ 8, 0, 0 ], [ 0, - 3, 0 ],[ 0, 0, 0 ]  ]
-//                V_initial = [[5, 0, 0], [0, 5, 0], [0, 0, 5], [5, 0, 0], [0, -3, 0], [0, 0, 0]]
-        //        V_initial = [ [ -3, -5, -7 ], [ 15, -4, 3 ], [ 2, -5, -8 ], [ -10, -3, -2 ], [ 0, - 3, 0 ],[ 0, 0, 0 ]  ]
-
-
-        var jointLimits = [[-170, 170], [-90, 45], [-80, 120], [-112.5, 112.5], [-90, 120], [-180, 179]]
-        jointLimits = [[-90, 90], [-58, 90], [-135, 40], [-90, 75], [-39,141], [-188, 178]]
-
-
-        var maxAngleVelocity = 90.0 / 180.0 * Math.PI / 1000.0;
-
-        var maxAngleVelocities = [
-            maxAngleVelocity,
-            maxAngleVelocity,
-            maxAngleVelocity,
-            maxAngleVelocity,
-            maxAngleVelocity,
-            maxAngleVelocity
-        ]
-
-        var scene = setupScene();
-
-        var VisualRobot = new THREERobot(V_initial, jointLimits, scene)
-        var robotController = new RobotController(V_initial, jointLimits, maxAngleVelocities)
-        var hmi = new Hmi(robotController, VisualRobot, scene, render)
-
-        debug.robotGeometryObjects = VisualRobot.robotBones
-        debug.scene = scene
-
-        render();
-
-
-        window.onload = function () {
-            var options = {
-                maxVelocity: 5
-            }
-
-            var gui = new dat.GUI();
-//            gui.add(hmi, 'message');
-
-            var hmiGui = gui.addFolder('HMI');
-            gui.remember(hmi);
-            hmiGui.add(hmi, 'followTarget').onChange(function () {
-                if (hmi.followTarget) {
-                    hmi.updateTarget()
-                }
-            })
-            hmiGui.add(hmi, 'simulationInterval', 20, 150).step(5).onChange(function () {
-                hmi.modeChanged()
-            })
-            hmiGui.add(hmi, 'simulationMode', ['follow', 'simulate']).onChange(function () {
-                hmi.modeChanged()
-            });
-            var pathGui = hmiGui.addFolder('path');
-            pathGui.add(hmi, 'targetToTCP')
-            pathGui.add(hmi, 'addPosition')
-            pathGui.add(hmi, 'startQueue')
-
-
-            var robotControllerGui = gui.addFolder('robotController');
-            gui.remember(robotController);
-            robotControllerGui.add(robotController, 'movementMethod', ['P2P', 'LINEAR'])
-            robotControllerGui.add(robotController, 'resetPosition')
-            robotControllerGui.add(robotController, 'moveToMinPosition')
-            robotControllerGui.add(robotController, 'moveToMaxPosition')
-            robotControllerGui.add(robotController, '_interpolationDistance', 0.05, 2)
-
-            robotControllerGui.add(options, 'maxVelocity', 0.1, 5).onChange(function () {
-                robotController.setMaxVelocity(options.maxVelocity)
-            });
-        };
-
-
-        function setupScene() {
-            if (Detector.webgl) {
-                renderer = new THREE.WebGLRenderer({
-                    antialias: true,	// to get smoother output
-                    preserveDrawingBuffer: true	// to allow screenshot
-                });
-                renderer.setClearColor(0xbbbbbb);
-            } else {
-                Detector.addGetWebGLMessage();
-            }
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('container').appendChild(renderer.domElement);
-
-
-            // create a scene
-            var scene = new THREE.Scene();
-
-            // put a camera in the scene
-            camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000);
-            camera = new THREE.OrthographicCamera(-15, 15, 15, -12, 1, 1000);
-            camera.position.set(-25, 25, 25);
-            scene.add(camera);
-
-            // here you add your objects
-            // - you will most likely replace this part by your own
-            var light = new THREE.AmbientLight(Math.random() * 0xffffff);
-            scene.add(light);
-            var light = new THREE.DirectionalLight(Math.random() * 0xffffff);
-            light.position.set(Math.random(), Math.random(), Math.random()).normalize();
-            scene.add(light);
-
-
-            var cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
-            cameraControls.addEventListener('change', render)
-
-            // transparently support window resize
-            THREEx.WindowResize.bind(renderer, camera);
-
-            var size = 10;
-            var step = 20;
-
-            var gridHelper = new THREE.GridHelper(size, step);
-            scene.add(gridHelper);
-
-            var axisHelper = new THREE.AxisHelper(5);
-            scene.add(axisHelper);
-
-            return scene;
-        }
-
-        function render() {
-
-            // actually render the scene
-            renderer.render(scene, camera);
-        }
-
-    }
-    init()
-</script>
+    </script>
 </body>
+
 </html>
