@@ -1,118 +1,248 @@
 define((require, exports, module) => {
-  const EventBus = require('EventBus')
-  const gui = require('UiDat')
+  const storeManager = require('State')
 
-  class Robot {
+  localState = {
+    jointOutOfBound: [false, false, false, false, false, false],
+  }
+  const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
 
-    constructor(state, scene) {
-      const scope = this
-      this.state = state
-      this.THREESimulationRobot = new THREE.Group()
-      scene.add(this.THREESimulationRobot)
-      this.localState = {
-        jointOutOfBound: this.state.Robot.jointOutOfBound,
-      }
+  const defaultRobotState = {
+    target: {
+      position: {
+        x: 10,
+        y: 10,
+        z: 10,
+      },
+      rotation: {
+        x: 10,
+        y: 10,
+        z: 10,
+      },
+    },
+    angles: {
+      A0: 0,
+      A1: 0,
+      A2: 0,
+      A3: 0,
+      A4: 0,
+      A5: 0,
+    },
+    jointOutOfBound: [false, false, false, false, false, false],
+    maxAngleVelocities: {
+      J0: maxAngleVelocity,
+      J1: maxAngleVelocity,
+      J2: maxAngleVelocity,
+      J3: maxAngleVelocity,
+      J4: maxAngleVelocity,
+      J5: maxAngleVelocity,
+    },
+    jointLimits: {
+      J0: [-90, 90],
+      J1: [-58, 90],
+      J2: [-135, 40],
+      J3: [-90, 75],
+      J4: [-39, 141],
+      J5: [-188, 181],
+    },
+    geometry: {
+      V0: {
+        x: 1,
+        y: 1,
+        z: 0,
+      },
+      V1: {
+        x: 0,
+        y: 10,
+        z: 0,
+      },
+      V2: {
+        x: 5,
+        y: 0,
+        z: 0,
+      },
+      V3: {
+        x: 3,
+        y: 0,
+        z: 0,
+      },
+      V4: {
+        x: 0,
+        y: -3,
+        z: 0,
+      },
+      V5: {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
+    },
+  }
+  const robotStore = storeManager.createStore('Robot', defaultRobotState)
 
-      /* DAT GUI */
 
-      const geometryGui = gui.addFolder('robot geometry')
+  let IK;
 
-      const controller = {
+  function updateIK(geometry) {
+    const geo = Object.values(geometry).map((val, i, array) => {
+      return [val.x, val.y, val.z]
+    })
+    //todo not optimal, since IK is a sideeffect
+    IK = new InverseKinematic(geo, [ // todo remove when using new ik
+      [-90, 90],
+      [-58, 90],
+      [-135, 40],
+      [-90, 75],
+      [-39, 141],
+      [-188, 181],
+    ])
+  }
 
-        freezeRobot() {
-          const geometry = Object.values(scope.state.Robot.geometry).map((val, i, array) => [val.x, val.y, val.z])
-          const jointLimits = Object.values(scope.state.Robot.jointLimits)
-          scope.VisualRobot = new THREERobot(geometry, jointLimits, scope.THREESimulationRobot)
-        },
-      }
 
-      geometryGui.add(controller, 'freezeRobot').onChange(() => {})
+  robotStore.listen([state => state.geometry], (geometry)=> {
+    updateIK(geometry)
+  })
 
-      for (const link in state.Robot.geometry) {
-        if (link) {
-          const linkFolder = geometryGui.addFolder(`link ${link}`)
-          for (const axis in state.Robot.geometry[link]) {
-            if (axis) {
-              gui.remember(state.Robot.geometry[link])
-              linkFolder.add(state.Robot.geometry[link], axis).min(-10).max(10).step(0.1).onChange(() => {
-                scope.buildRobot() // todo build robot on any change - test if geometry actually changed
-                // todo find a way to detect if the state actually changed
-                // we always listen for specific parts of the state
-                // function observeStore(store, select, onChange) {
-                //   let currentState;
-                //
-                //   function handleChange() {
-                //     let nextState = select(store.getState());
-                //     if (nextState !== currentState) {
-                //       currentState = nextState;
-                //       onChange(currentState);
-                //     }
-                //   }
-                //
-                //   let unsubscribe = store.subscribe(handleChange);
-                //   handleChange();
-                //   return unsubscribe;
-                // }
-                EventBus.publish('ROBOT_CHANGE_GEOMETRY', {
-                  type: 'change',
-                })
-              })
-            }
-          }
-        }
-      }
 
-      const anglesGui = gui.addFolder('angles')
-      for (const key in state.Robot.angles) {
-        anglesGui.add(state.Robot.angles, key).min(-Math.PI).max(Math.PI).step(0.1).listen()
-      }
+  const calculateAngles = (state, position, rotation) => {
 
-      /* END DAT GUI */
+    const angles = []
+    const result = IK.calculateAngles(
+       position.x,
+       position.y,
+       position.z,
+       rotation.x,
+       rotation.y,
+       rotation.z,
+       angles
+    )
 
-      this.buildRobot() // after GUI loaded in the stored values
-
-      EventBus.subscribe('change', () => {
-        this.setTarget(Object.values(this.state.Robot.angles))
-      })
-    }
-
-    buildRobot() {
-      if (this.state.Robot.geometry.V3.y !== 0 || this.state.Robot.geometry.V3.z !== 0 || this.state.Robot.geometry.V4.z !== 0 || this.state.Robot.geometry.V4.x !== 0) {
-        alert('geometry where V3 y,z not 0 and V4 x,z not 0 are not supported, yet')
-        this.state.Robot.geometry.V3.y =
-          this.state.Robot.geometry.V3.z =
-          this.state.Robot.geometry.V4.z =
-          this.state.Robot.geometry.V4.x = 0
-      }
-      for (const child of this.THREESimulationRobot.children) {
-        this.THREESimulationRobot.remove(child)
-      }
-      // object to nested arrays
-      const geometry = Object.values(this.state.Robot.geometry).map((val, i, array) => {
-        return [val.x, val.y, val.z]
-      })
-      const jointLimits = Object.values(this.state.Robot.jointLimits)
-
-      this.VisualRobot = new THREERobot(geometry, jointLimits, this.THREESimulationRobot)
-    }
-
-    setTarget(angles) {
-      this.VisualRobot.setAngles(angles)
-
-      for (let i = 0; i < 6; i++) {
-        if (this.localState.jointOutOfBound[i] && !this.state.Robot.jointOutOfBound[i]) { // highlight only on change
-          this.VisualRobot.highlightJoint(i, 0xff0000)
-        } else if (!this.localState.jointOutOfBound[i] && this.state.Robot.jointOutOfBound[i]) {
-          this.VisualRobot.highlightJoint(i)
-        }
-      }
-
-      this.localState.jointOutOfBound = this.state.Robot.jointOutOfBound
-    }
-
-    setVisible(visible) {
-      this.THREESimulationRobot.visible = visible
+    return {
+      angles,
+      result,
     }
   }
-  module.exports = Robot
+
+  /* --- Reducer --- */
+  robotStore.action('ROBOT_CHANGE_TARGET', (state, data) => {
+    const {
+       angles,
+       result,
+    } = calculateAngles(state, data.position, data.rotation)
+    return Object.assign({}, state, {
+      target: {
+        position: Object.assign({}, data.position),
+        rotation: Object.assign({}, data.rotation),
+      },
+    }, {
+      angles: {
+        A0: angles[0],
+        A1: angles[1],
+        A2: angles[2],
+        A3: angles[3],
+        A4: angles[4],
+        A5: angles[5],
+      },
+    }, {
+      jointOutOfBound: [...result],
+    })
+  })
+
+  robotStore.action('ROBOT_CHANGE_ANGLES', (state, angles) => {
+    const TCPpose = []
+    const result = IK.calculateTCP(
+       angles.A0,
+       angles.A1,
+       angles.A2,
+       angles.A3,
+       angles.A4,
+       angles.A5,
+       TCPpose
+    )
+
+    return Object.assign({}, state, {
+      target: {
+        position: {
+          x: TCPpose[0],
+          y: TCPpose[1],
+          z: TCPpose[2],
+        },
+        rotation: {
+          x: TCPpose[3],
+          y: TCPpose[4],
+          z: TCPpose[5],
+        },
+      },
+    }, {
+      angles: {
+        A0: angles.A0,
+        A1: angles.A1,
+        A2: angles.A2,
+        A3: angles.A3,
+        A4: angles.A4,
+        A5: angles.A5,
+      },
+    })
+    // { todo
+    //   jointOutOfBound: [...result],
+    // }
+  })
+
+  robotStore.action('ROBOT_CHANGE_GEOMETRY', (state, data) => {
+    const geo = Object.assign({}, state.geometry, data)
+    updateIK(geo)
+    const {
+       angles,
+       result,
+    } = calculateAngles(state, state.target.position, state.target.rotation)
+    return Object.assign({}, state, {
+      angles: {
+        A0: angles[0],
+        A1: angles[1],
+        A2: angles[2],
+        A3: angles[3],
+        A4: angles[4],
+        A5: angles[5],
+      },
+    }, {
+      jointOutOfBound: [...result],
+    }, {
+      geometry: {
+        V0: {
+          x: geo.V0.x,
+          y: geo.V0.y,
+          z: geo.V0.z,
+        },
+        V1: {
+          x: geo.V1.x,
+          y: geo.V1.y,
+          z: geo.V1.z,
+        },
+        V2: {
+          x: geo.V2.x,
+          y: geo.V2.y,
+          z: geo.V2.z,
+        },
+        V3: {
+          x: geo.V3.x,
+          y: geo.V3.y,
+          z: geo.V3.z,
+        },
+        V4: {
+          x: geo.V4.x,
+          y: geo.V4.y,
+          z: geo.V4.z,
+        },
+        V5: {
+          x: geo.V5.x,
+          y: geo.V5.y,
+          z: geo.V5.z,
+        },
+
+      },
+    })
+  })
+
+
+  module.exports = robotStore
 })
+//todo -> get rid of scene injection using require scene -> threerobot handles 3d view

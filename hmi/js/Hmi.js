@@ -1,13 +1,77 @@
 define((require, exports, module) => {
-  const Target = require('Target')
   const Robot = require('Robot')
+  const RobotTHREE = require('RobotTHREE')
+  const RobotGui = require('Robot.Gui')
+  // const RobotGui = require('Robot.Gui')
+  const Target = require('Target')
+  const TargetGui = require('Target.Gui')
   const gui = require('UiDat')
   const io = require('/socket.io/socket.io.js')
   const EventBus = require('EventBus')
-  const createStore = require('redux').createStore
+  const redux = require('redux')
   const THREEView = require('THREEView')
+  const storeManager = require('State')
 
-  /* POLYFILL */
+  const logger = store => dispatch => (action, data) => {
+    console.group(`ACTION ${action}`)
+
+    console.log(`action: %c${action}`, 'color:green')
+    console.log('data: ', data)
+    console.log('%cstore before: ', 'color:orange', store.getState())
+
+    const newState = dispatch(action, data)
+    console.log('%cnew state: ', 'color:green', newState)
+    console.groupEnd()
+    return newState
+  }
+
+  const mid = store => dispatch => (action, data) => {
+    const oldState = store.getState()
+    const oldStateCopy = JSON.parse(JSON.stringify(oldState))
+
+    const newState = dispatch(action, data)
+
+    function compare(o, n, os) {
+      for (const i of Object.keys(o).concat(Object.keys(n))) {
+        if (typeof n[i] === 'undefined') {
+          if (os === n) {
+            console.warn('nooohohoohoh did not change state, bro!')
+            console.warn('element was removed, but parent not changed')
+          }
+        } else if (typeof o[i] === 'undefined') {
+          if (os === n) {
+            console.warn('nooohohoohoh did not change state, bro!')
+            console.warn('element was added, but parent not changed')
+          }
+        } else if (!!o[i] && typeof (o[i]) === 'object') {
+          // console.log('aaaa')
+          //
+          compare(o[i], n[i], os[i])
+        } else {
+          if (typeof n[i] === 'undefined' || o[i] !== n[i]) { // el deleted, or value not same
+            // value has changed todo iter over newState (missing ones were deleted, dont matter. new ones dont matter either hm....)
+
+            // new state cant be old state, if a child changed
+            if (os === n) {
+              console.warn('nooohohoohoh did not change state, bro!')
+              console.group(`state ${action}`)
+              console.log(`oldStateCopy: ${o[i]}`)
+              console.log(`oldState: %c${os[i]}`, 'color: red')
+              console.log(`newState: ${n[i]}`)
+              console.groupEnd()
+            }
+          }
+          // console.log(i, o[i] === n[i])
+        }
+      }
+    }
+    compare(oldStateCopy, newState, oldState)
+
+    return newState
+  }
+
+  storeManager.applyMiddleware(logger, mid)
+    /* POLYFILL */
 
   const reduce = Function.bind.call(Function.call, Array.prototype.reduce)
   const isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable)
@@ -24,8 +88,14 @@ define((require, exports, module) => {
 
   class Hmi {
     constructor() {
+      const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
+
+
+      const store = storeManager.createStore('Hmi', {})
+
+
       const scope = this
-      let geometry = [
+      const geometry = [
         [1, 1, 0],
         [0, 10, 0],
         [5, 0, 0],
@@ -47,7 +117,7 @@ define((require, exports, module) => {
       //                geometry = [[5, 0, 0], [0, 5, 0], [0, 0, 5], [5, 0, 0], [0, -3, 0], [0, 0, 0]]
       //        geometry = [ [ -3, -5, -7 ], [ 15, -4, 3 ], [ 2, -5, -8 ], [ -10, -3, -2 ], [ 0, - 3, 0 ],[ 0, 0, 0 ]  ]
 
-      let jointLimits = [
+      const jointLimits = [
         [-170, 170],
         [-90, 45],
         [-80, 120],
@@ -55,8 +125,6 @@ define((require, exports, module) => {
         [-90, 120],
         [-180, 179],
       ]
-
-      const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
 
       this.state = {
         jointOutOfBound: [false, false, false, false, false, false],
@@ -116,7 +184,7 @@ define((require, exports, module) => {
             J2: [-135, 40],
             J3: [-90, 75],
             J4: [-39, 141],
-            J5: [-188, 178],
+            J5: [-188, 181],
           },
           geometry: {
             V0: {
@@ -153,64 +221,29 @@ define((require, exports, module) => {
         },
       }
 
-      geometry = Object.values(this.state.Robot.geometry).map((val, i, array) => {
-        return [val.x, val.y, val.z]
-      })
-      jointLimits = Object.values(this.state.Robot.jointLimits)
 
-      this.IK = new InverseKinematic(geometry, jointLimits)
+      EventBus.subscribe('ROBOT_CHANGE_ANGLES', (data) => {
+        scope.state.Robot.angles = data.payload.angles
 
-      const setAngles = () => {
-        const geometry = Object.values(this.state.Robot.geometry).map((val, i, array) => {
-          return [val.x, val.y, val.z]
-        })
-        const jointLimits = Object.values(this.state.Robot.jointLimits)
+        const TCPpose = []
+        const result = this.IK.calculateTCP(
+            scope.state.Robot.angles.A0,
+            scope.state.Robot.angles.A1,
+            scope.state.Robot.angles.A2,
+            scope.state.Robot.angles.A3,
+            scope.state.Robot.angles.A4,
+            scope.state.Robot.angles.A5,
+            TCPpose
+          )
 
-        const angles = []
-        const result = this.IK.calculateAngles(
-          this.state.Robot.target.position.x,
-          this.state.Robot.target.position.y,
-          this.state.Robot.target.position.z,
-          this.state.Robot.target.rotation.x,
-          this.state.Robot.target.rotation.y,
-          this.state.Robot.target.rotation.z,
-          angles
-        )
+          // todo joint out of bound
 
-        this.state.Robot.jointOutOfBound = result
-
-        this.state.Robot.angles.A0 = angles[0]
-        this.state.Robot.angles.A1 = angles[1]
-        this.state.Robot.angles.A2 = angles[2]
-        this.state.Robot.angles.A3 = angles[3]
-        this.state.Robot.angles.A4 = angles[4]
-        this.state.Robot.angles.A5 = angles[5]
-      }
-
-      /* --- Reducer --- */
-      EventBus.subscribe('ROBOT_CHANGE_TARGET', (data) => {
-        scope.state.Robot.target.position = data.payload.position
-        scope.state.Robot.target.rotation = data.payload.rotation
-        setAngles()
-
-        EventBus.publish('change', {
-
-        })
-        this.render()
-      })
-
-      EventBus.subscribe('change', (data) => {
-        this.render()
-      })
-
-      EventBus.subscribe('ROBOT_CHANGE_GEOMETRY', (data) => {
-        const geometry = Object.values(this.state.Robot.geometry).map((val, i, array) => {
-          return [val.x, val.y, val.z]
-        })
-        const jointLimits = Object.values(this.state.Robot.jointLimits)
-
-        this.IK = new InverseKinematic(geometry, jointLimits)
-        setAngles()
+        this.state.Robot.target.position.x = TCPpose[0]
+        this.state.Robot.target.position.y = TCPpose[1]
+        this.state.Robot.target.position.z = TCPpose[2]
+        this.state.Robot.target.rotation.x = TCPpose[3]
+        this.state.Robot.target.rotation.y = TCPpose[4]
+        this.state.Robot.target.rotation.z = TCPpose[5]
         EventBus.publish('change', {
 
         })
@@ -218,72 +251,10 @@ define((require, exports, module) => {
       })
         /* THREEJS SCENE SETUP */
 
-      this.renderer = new THREE.WebGLRenderer({
-        antialias: true, // to get smoother output
-        preserveDrawingBuffer: false, // no screenshot -> faster?
-      })
-      this.renderer.setClearColor(0x333333)
-
-      this.renderer.setSize(window.innerWidth, window.innerHeight)
-      document.getElementById('container').appendChild(this.renderer.domElement)
-
-      // create a scene
-      this.scene = new THREE.Scene()
-      debug.scene = this.scene
-
-      // toggle camera mode
-      const perspectiveCamera = true
-      if (perspectiveCamera) {
-        this.camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000)
-      } else {
-        this.camera = new THREE.OrthographicCamera(
-          window.innerWidth / -2,
-          window.innerWidth / 2,
-          window.innerHeight / 2,
-          window.innerHeight / -2, -500, 1000)
-        this.camera.zoom = 20
-        this.camera.updateProjectionMatrix()
-      }
-
-      this.camera.position.set(25, 25, -25)
-      this.scene.add(this.camera)
-
-      // lights
-      const light = new THREE.AmbientLight(0xaaaaaa)
-      this.scene.add(light)
-      const light2 = new THREE.DirectionalLight(0xaaaaaa)
-      light2.position.set(1, 1.3, 1).normalize()
-      this.scene.add(light2)
-
-      this.cameraControls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
-      this.cameraControls.addEventListener('change', this.render.bind(this))
-
-      function onWindowResize() {
-        if (perspectiveCamera) {
-          scope.camera.aspect = window.innerWidth / window.innerHeight
-          scope.camera.updateProjectionMatrix()
-        } else {
-          scope.camera.left = window.innerWidth / -2
-          scope.camera.right = window.innerWidth / 2
-          scope.camera.top = window.innerHeight / 2
-          scope.camera.bottom = window.innerHeight / -2
-          scope.camera.updateProjectionMatrix()
-        }
-
-        scope.renderer.setSize(window.innerWidth, window.innerHeight)
-        scope.render()
-      }
-
-      window.addEventListener('resize', onWindowResize, false)
-
-      const size = 10
-      const step = 20
-
-      const gridHelper = new THREE.GridHelper(size, step)
-      this.scene.add(gridHelper)
-
-      const axisHelper = new THREE.AxisHelper(5)
-      this.scene.add(axisHelper)
+     const {scene, renderer, camera} = require('THREEScene')
+      this.scene = scene
+      this.renderer = renderer
+      this.camera = camera
 
       /* END THREEJS SCENE SETUP */
 
@@ -294,7 +265,7 @@ define((require, exports, module) => {
 
       const fun = {
         resetTargetPos: () => {
-          EventBus.publish('TARGET_CHANGE_TARGET', {
+          EventBus.publish('ROBOT_CHANGE_TARGET', {
             payload: {
               position: {
                 x: 0,
@@ -309,9 +280,27 @@ define((require, exports, module) => {
             },
           })
         },
+        resetTargetAngles: () => {
+          EventBus.publish('ROBOT_CHANGE_ANGLES', {
+            payload: {
+              angles: {
+                A0: 0,
+                A1: 0,
+                A2: 0,
+                A3: 0,
+                A4: 0,
+                A5: 0,
+              },
+            },
+
+          })
+        },
       }
 
       hmiGui.add(fun, 'resetTargetPos').onChange(() => {
+
+      })
+      hmiGui.add(fun, 'resetTargetAngles').onChange(() => {
 
       })
 
@@ -377,16 +366,17 @@ define((require, exports, module) => {
       socket.on('data', (data) => {
         console.log(data)
           // todo
-        this.Robot.setAngles([20, 1, 1, 1, 1, 1])
+        // this.Robot.setAngles([20, 1, 1, 1, 1, 1])
       })
 
       /* END DAT GUI */
 
       /* INIT MODULES */
 
-      this.Target = new Target(this.state, this.scene, this.camera, this.renderer, this.cameraControls)
-      this.Robot = new Robot(this.state, this.scene)
-      this.Robot.setVisible(this.state.showRobot)
+      // this.Robot = new Robot(this.state, this.scene)
+      // this.RobotTHREE = new RobotTHREE(this.state, this.scene)
+      // this.Robot.setVisible(this.state.showRobot)
+      // this.Target = new Target(this.state, this.scene, this.camera, this.renderer, this.cameraControls)
 
       // remote robot
       const geometryArray = Object.values(this.state.Robot.geometry).map(val => [val.x, val.y, val.z])
@@ -437,16 +427,20 @@ define((require, exports, module) => {
 
       this.render()
 
+      store.listen((state) => {
+        console.log('rendering - state changed')
+        this.render()
+      })
       EventBus.publish('change', {})
     }
 
     robotToTargetPosition() {
-      this.Robot.setTarget(this.Target.getPosition(), this.Target.getRotation())
+      // this.Robot.setTarget(this.Target.getPosition(), this.Target.getRotation())
     }
 
     targetToTCP() {
       const position = []
-      this.RobotController.getCurrentPosition(position)
+      // this.RobotController.getCurrentPosition(position)
       this.target.position.x = position[0]
       this.target.position.y = position[1]
       this.target.position.z = position[2]
@@ -459,10 +453,17 @@ define((require, exports, module) => {
     }
 
     render() {
-      this.renderer.render(this.scene, this.camera)
+      // this.renderer.render(this.scene, this.camera)
+    }
+
+    setTarget(position, rotation) {
+      robotStore.dispatch('ROBOT_CHANGE_TARGET', {
+        position,
+        rotation,
+      })
     }
 
   }
 
-  module.exports = new Hmi()
+  module.exports = Hmi
 })

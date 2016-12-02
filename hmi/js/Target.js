@@ -1,289 +1,329 @@
 define((require, exports, module) => {
   const EventBus = require('EventBus')
   const gui = require('UiDat')
+  const storeManager = require('State')
+  const {scene, camera, renderer} = require('THREEScene')
 
-  class Target {
+  /**
+   * + state per module
+   * + render on state changed
+   * + get state from other modules
+   *
+   * --- onStore update render ---
+   * get data From other stores
+   * - store might not have changed, so no update
+   */
 
-    constructor(state, scene, camera, renderer, cameraControls) {
-      const scope = this
-      this.state = state.Target
-
-      const sphereGeo = new THREE.CylinderGeometry(1, 1, 1 * 2, 32)
-      this.target = new THREE.Group()
-      const targetMesh = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({
-        transparent: true,
-        opacity: 0.7,
-        color: 0xaaaaaa,
-      }))
-      targetMesh.rotation.z = Math.PI / 2
-      targetMesh.position.x += 1
-      this.target.add(targetMesh)
-      const axisHelper = new THREE.AxisHelper(5)
-      this.target.add(axisHelper)
-      this.target.rotation.order = 'ZYX'
-      scene.add(this.target)
-
-      /* CONTROLS */
-
-      function createRing(radius, color, axis) {
-        const sphere_radius = 0.12
-
-        const ringMaterial = new THREE.MeshLambertMaterial({
-          color,
-        })
-
-        // create ring shape
-        const circleMesh = new THREE.Mesh(
-          new THREE.TorusGeometry(radius, 0.05, 6, 50),
-          ringMaterial
-        )
-
-        const sphereMesh = new THREE.Mesh(
-          new THREE.SphereGeometry(sphere_radius, 12, 10),
-          ringMaterial
-        )
-        sphereMesh.position.x = radius
-
-        const composite = new THREE.Object3D()
-        composite.add(circleMesh)
-        composite.add(sphereMesh)
-          // composite.add(coneMesh)
-
-        if (axis === 'x') {
-          composite.rotation.y = Math.PI / 2
-        } else if (axis === 'y') {
-          composite.rotation.x = Math.PI / 2
-        }
-
-        const ringObj = new THREE.Object3D()
-        ringObj.add(composite)
-
-        return ringObj
-      }
-      let ringx
-      let ringy
-      let ringz
-        // Euler https://www.udacity.com/course/viewer#!/c-cs291/l-91073092/m-123949249
-      function createAllRings(parentObject) {
-        // debugger
-        // create Rings
-        ringx = createRing(2.00, 0xFF0000, 'x')
-        ringy = createRing(1.75, 0x00FF00, 'y')
-        ringz = createRing(1.50, 0x0000FF, 'z')
-
-        // set up rotation hierarchy - assuming x -> y -> z intrinsic
-        ringy.add(ringz)
-        ringx.add(ringy)
-
-        parentObject.add(ringx)
-      }
-
-      this.eulerRings = new THREE.Object3D()
-      scene.add(this.eulerRings)
-      createAllRings(this.eulerRings)
-
-      EventBus.subscribe('change', () => {
-        scope.target.position.x = this.state.position.x
-        scope.target.position.y = this.state.position.y
-        scope.target.position.z = this.state.position.z
-
-        scope.target.rotation.x = this.state.rotation.x
-        scope.target.rotation.y = this.state.rotation.y
-        scope.target.rotation.z = this.state.rotation.z
-
-        scope.eulerRings.position.set(scope.target.position.x, scope.target.position.y, scope.target.position.z)
-        ringx.rotation.x = scope.target.rotation.x
-        ringy.rotation.y = scope.target.rotation.y
-        ringz.rotation.z = scope.target.rotation.z
-      })
-
-      EventBus.subscribe('TARGET_CHANGE_TARGET', (data) => {
-        // issue: when firing from external this does not check and update the robots target state
-        if (this.state.followTarget) {
-          EventBus.publish('ROBOT_CHANGE_TARGET', {
-            payload: {
-              position: data.payload.position,
-              rotation: data.payload.rotation,
-            },
-          })
-        }
-
-        scope.state.position = data.payload.position
-        scope.state.rotation = data.payload.rotation
-        EventBus.publish('change', {
-
-        })
-      })
-
-      this.control = new THREE.TransformControls(camera, renderer.domElement)
-
-      const targetChangedAction = () => {
-        EventBus.publish('TARGET_CHANGE_TARGET', {
-          payload: {
-            position: scope.target.position,
-            rotation: scope.target.rotation,
-          },
-        })
-      }
-
-      //            this.control.rotation.x = 2
-      this.control.addEventListener('change', () => {
-        targetChangedAction()
-      })
-      this.control.attach(this.target)
-      this.control.setMode(state.manipulate)
-      this.control.setMode(state.manipulate)
-
-      scene.add(this.control)
-
-      /* MOUSE CONTROL */
-      const raycaster = new THREE.Raycaster()
-      const mouse = new THREE.Vector2()
-
-      let DOWNPOSITION
-      let lastTranslateX = 0
-
-      function onDocumentMouseMove(event) {
-        event.preventDefault()
-
-        mouse.x = ((event.clientX / window.innerWidth) * 2) - 1
-        mouse.y = (-(event.clientY / window.innerHeight) * 2) + 1
-
-        if (DOWNPOSITION) {
-          const dy = event.clientY - DOWNPOSITION.y
-
-          scope.target.translateX((dy - lastTranslateX) * 0.1)
-          lastTranslateX = dy
-          targetChangedAction()
-          return
-        }
-        raycaster.setFromCamera(mouse, camera)
-        const intersects = raycaster.intersectObjects(scope.target.children)
-
-        if (intersects.length > 0) {
-          renderer.domElement.style.cursor = 'pointer'
-        } else {
-          renderer.domElement.style.cursor = 'auto'
-        }
-      }
-
-      function onDocumentMouseDown(event) {
-        event.preventDefault()
-
-        raycaster.setFromCamera(mouse, camera)
-
-        const intersects = raycaster.intersectObject(targetMesh)
-
-        if (intersects.length > 0) {
-          DOWNPOSITION = {
-            x: event.clientX,
-            y: event.clientY,
-          }
-          cameraControls.enabled = false
-
-          renderer.domElement.style.cursor = 'move'
-        }
-      }
-
-      function onDocumentMouseUp(event) {
-        DOWNPOSITION = null
-        lastTranslateX = 0
-        event.preventDefault()
-
-        cameraControls.enabled = true
-
-        renderer.domElement.style.cursor = 'auto'
-      }
-
-      renderer.domElement.addEventListener('mousemove', onDocumentMouseMove, false)
-      renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false)
-      renderer.domElement.addEventListener('mouseup', onDocumentMouseUp, false)
-
-      // GUI
-      // TARGET
-
-      const targetGUI = gui.addFolder('target')
-
-      targetGUI.add(scope.state, 'followTarget').onChange(() => {
-        if (scope.state.followTarget) {
-          targetChangedAction()
-        }
-      })
-
-      targetGUI.add(this.state, 'manipulate', ['translate', 'rotate']).onChange(() => {
-        scope.setMode(this.state.manipulate)
-      }).listen()
-      targetGUI.add(scope.target.position, 'x').step(0.1).onChange(() => {
-        targetChangedAction()
-      }).listen()
-      targetGUI.add(scope.target.position, 'y').step(0.1).onChange(() => {
-        targetChangedAction()
-      }).listen()
-      targetGUI.add(scope.target.position, 'z').step(0.1).onChange(() => {
-        targetChangedAction()
-      }).listen()
-
-      targetGUI.add(scope.target.rotation, 'x').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
-        targetChangedAction()
-      })
-      targetGUI.add(scope.target.rotation, 'y').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
-        targetChangedAction()
-      })
-      targetGUI.add(scope.target.rotation, 'z').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
-        targetChangedAction()
-      })
-      targetGUI.add(this.state, 'showEulerRings').onChange(() => {
-        scope.eulerRings.visible = this.state.showEulerRings
-        EventBus.publish('VIEW_RENDER', {
-
-        }) // dont cann View.render() simce there may be multiple view instances
-      })
-      targetGUI.add(this.state, 'showControls').onChange(() => {
-        scope.control.visible = this.state.showControls
-        cameraControls.enabled = this.state.showControls // not working
-        EventBus.publish('VIEW_RENDER', {
-
-        }) // dont cann View.render() simce there may be multiple view instances
-      })
-
-      scope.eulerRings.visible = this.state.showEulerRings
-      scope.control.visible = this.state.showControls
-
-      window.addEventListener('keydown', (event) => {
-        switch (event.keyCode) {
-          case 82:
-            console.log('rotation mode')
-            scope.setMode('rotate')
-            break
-          case 84:
-            console.log('translation mode')
-            scope.setMode('translate')
-            break
-          default:
-            break
-        }
-        EventBus.publish('Target.change', {
-          type: 'change',
-        })
-      }, false)
-    }
-
-    getPosition() {
-      return this.target.position
-    }
-    getRotation() {
-      return this.target.rotation
-    }
-    setMode(mode) {
-      this.state.manipulate = mode
-      this.control.setMode(mode)
-    }
-    setEulerRingsVisibility(visible) {
-      this.eulerRings.visible = visible
-    }
-    setControlsVisibility(visible) {
-      this.control.visible = visible
-    }
+  const defaultState = {
+    controlSpace: 'local',
+    eulerRingsVisible: false,
+    controlVisible: true,
+    controlMode: 'translate',
+    followTarget: true,
+    manipulate: 'rotate',
+    showEulerRings: false,
+    showControls: true,
+    position: {
+      x: 10,
+      y: 10,
+      z: 10,
+    },
+    rotation: {
+      x: 10,
+      y: 10,
+      z: 10,
+    },
   }
-  module.exports = Target
+
+  const store = storeManager.createStore('Target', defaultState)
+
+  store.action('CHANGE_FOLLOW_TARGET', (state, data) => {
+    if (data) {
+      store.getStore('Robot').dispatch('ROBOT_CHANGE_TARGET', {
+        position: state.position,
+        rotation: state.rotation,
+      })
+    }
+    return Object.assign({}, state, {
+      followTarget: data,
+    })
+  })
+
+  const sphereGeo = new THREE.CylinderGeometry(1, 1, 1 * 2, 32)
+  const target = new THREE.Group()
+  const targetCylinder = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0.7,
+    color: 0xaaaaaa,
+  }))
+  targetCylinder.rotation.z = Math.PI / 2
+  targetCylinder.position.x += 1
+  target.add(targetCylinder)
+  const arrowZ = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 3, 0x0000ff)
+  // arrowZ.line.material.linewidth = 4
+  target.add(arrowZ)
+  const arrowY = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 3, 0x00ff00)
+  // arrowY.line.material.linewidth = 4
+  target.add(arrowY)
+  const arrowX = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 3, 0xff0000)
+  // arrowX.line.material.linewidth = 4
+  target.add(arrowX)
+  // const axisHelper = new THREE.AxisHelper(5)
+  // target.add(axisHelper)
+  target.rotation.order = 'ZYX'
+  scene.add(target)
+
+  /* CONTROLS */
+
+  function createRing(radius, color, axis) {
+    const sphere_radius = 0.12
+
+    const ringMaterial = new THREE.MeshLambertMaterial({
+      color,
+    })
+
+    // create ring shape
+    const circleMesh = new THREE.Mesh(
+       new THREE.TorusGeometry(radius, 0.05, 6, 50),
+       ringMaterial
+    )
+
+    const sphereMesh = new THREE.Mesh(
+       new THREE.SphereGeometry(sphere_radius, 12, 10),
+       ringMaterial
+    )
+    sphereMesh.position.x = radius
+
+    const composite = new THREE.Object3D()
+    composite.add(circleMesh)
+    composite.add(sphereMesh)
+    // composite.add(coneMesh)
+
+    if (axis === 'x') {
+      composite.rotation.y = Math.PI / 2
+    } else if (axis === 'y') {
+      composite.rotation.x = Math.PI / 2
+    }
+
+    const ringObj = new THREE.Object3D()
+    ringObj.add(composite)
+
+    return ringObj
+  }
+
+  let ringx
+  let ringy
+  let ringz
+  // Euler https://www.udacity.com/course/viewer#!/c-cs291/l-91073092/m-123949249
+  function createAllRings(parentObject) {
+    // debugger
+    // create Rings
+    ringz = createRing(2.00, 0x0000FF, 'z')
+    ringy = createRing(1.75, 0x00FF00, 'y')
+    ringx = createRing(1.50, 0xFF0000, 'x')
+
+    // set up rotation hierarchy - assuming x -> y -> z intrinsic
+    ringy.add(ringx)
+    ringz.add(ringy)
+
+    parentObject.add(ringz)
+  }
+
+  const eulerRings = new THREE.Object3D()
+  scene.add(eulerRings)
+  createAllRings(eulerRings)
+
+  const control = new THREE.TransformControls(camera, renderer.domElement)
+  let disableUpdate = false
+  store.listen([() => store.getStore('Robot').getState().target, state => state], (targetT, state) => {
+    if (state.followTarget) {
+      target.position.x = targetT.position.x
+      target.position.y = targetT.position.y
+      target.position.z = targetT.position.z
+
+      target.rotation.x = targetT.rotation.x
+      target.rotation.y = targetT.rotation.y
+      target.rotation.z = targetT.rotation.z
+    } else {
+      target.position.x = state.position.x
+      target.position.y = state.position.y
+      target.position.z = state.position.z
+
+      target.rotation.x = state.rotation.x
+      target.rotation.y = state.rotation.y
+      target.rotation.z = state.rotation.z
+    }
+
+    if (true) { // loop -  changing mode triggers change....
+      disableUpdate = true
+      control.setMode(state.controlMode)
+      control.setSpace(state.controlSpace)
+      disableUpdate = false
+    }
+
+    control.visible = state.controlVisible
+    eulerRings.visible = state.eulerRingsVisible
+
+    eulerRings.position.set(target.position.x, target.position.y, target.position.z)
+    ringx.rotation.x = target.rotation.x
+    ringy.rotation.y = target.rotation.y
+    ringz.rotation.z = target.rotation.z
+
+    // control.dispatchEvent({ type: 'change' })
+  })
+
+  EventBus.subscribe('TARGET_CHANGE_TARGET', (data) => {
+    store.getState().position = data.payload.position
+    store.getState().rotation = data.payload.rotation
+    EventBus.publish('change', {})
+  })
+
+  const targetChangedAction = () => {
+    setTarget(target.position, target.rotation)
+
+    // bonus points: how to not fire an action from this reducer and still be able
+    // to call CHANGE_TARGET on Target and sync the ROBOT_TARGET
+    // state.dispatch('ROBOT_CHANGE_TARGET', {
+    //   position: target.position,
+    //   rotation: target.rotation,
+    // })
+  }
+
+  //            control.rotation.x = 2
+  control.addEventListener('change', () => {
+    if (!disableUpdate) { // changing controlmode causes a loop
+      targetChangedAction()
+    }
+  })
+  control.attach(target)
+
+
+  scene.add(control)
+
+  // GUI
+  // TARGET
+
+  // const targetGUI = gui.addFolder('target')
+  //
+  // targetGUI.add(store.getState(), 'followTarget').onChange(() => {
+  //   store.dispatch('CHANGE_FOLLOW_TARGET', !store.getState().followTarget)
+  // }).listen()
+  // targetGUI.add({toggleSpace}, 'toggleSpace')
+  // targetGUI.add(store.getState(), 'manipulate', ['translate', 'rotate']).onChange(() => {
+  //   setMode(store.getState().manipulate)
+  // }).listen()
+  // targetGUI.add(target.position, 'x').step(0.1).onChange(() => {
+  //   targetChangedAction()
+  // }).listen()
+  // targetGUI.add(target.position, 'y').step(0.1).onChange(() => {
+  //   targetChangedAction()
+  // }).listen()
+  // targetGUI.add(target.position, 'z').step(0.1).onChange(() => {
+  //   targetChangedAction()
+  // }).listen()
+  //
+  // targetGUI.add(target.rotation, 'x').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
+  //   targetChangedAction()
+  // })
+  // targetGUI.add(target.rotation, 'y').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
+  //   targetChangedAction()
+  // })
+  // targetGUI.add(target.rotation, 'z').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
+  //   targetChangedAction()
+  // })
+  // targetGUI.add(store.getState(), 'showEulerRings').onChange(() => {
+  //   eulerRings.visible = store.getState().showEulerRings
+  //   EventBus.publish('VIEW_RENDER', {}) // dont cann View.render() simce there may be multiple view instances
+  // })
+  // targetGUI.add(store.getState(), 'showControls').onChange(() => {
+  //   control.visible = store.getState().showControls
+  //   // cameraControls.enabled = store.getState().showControls // not working
+  //   EventBus.publish('VIEW_RENDER', {}) // dont cann View.render() simce there may be multiple view instances
+  // })
+
+  eulerRings.visible = store.getState().showEulerRings
+  control.visible = store.getState().showControls
+
+  window.addEventListener('keydown', (event) => {
+    switch (event.keyCode) {
+      case 82:
+        console.log('rotation mode')
+        setMode('rotate')
+        break
+      case 84:
+        console.log('translation mode')
+        setMode('translate')
+        break
+      default:
+        break
+    }
+    EventBus.publish('Target.change', {
+      type: 'change',
+    })
+  }, false)
+
+
+  store.action('CONTROL_SPACE_TOGGLE', state => state.controlSpace, controlSpace => ((controlSpace === 'local') ? 'world' : 'local'))
+  function toggleSpace() {
+    store.dispatch('CONTROL_SPACE_TOGGLE')
+  }
+
+  function getState() {
+    return store.getState()
+  }
+
+  function setMode(mode) {
+    store.action('CHANGE_CONTROL_MODE', state => state.controlMode, (controlMode, data) => data.mode)
+    store.dispatch('CHANGE_CONTROL_MODE', {
+      mode,
+    })
+  }
+
+  function setEulerRingsVisibility(visible) {
+    store.action('EULERRINGS_VISIBLE', state => state.eulerRingsVisible, (eulerRingsVisible, data) => data.visible)
+    store.dispatch('EULERRINGS_VISIBLE', {
+      visible,
+    })
+  }
+
+  function setControlsVisibility(visible) {
+    store.action('CONTROl_VISIBLE', state => state.controlVisible, (controlVisible, data) => data.visible)
+    store.dispatch('CONTROl_VISIBLE', {
+      visible,
+    })
+  }
+
+  function setTarget(position, rotation) {
+    store.action('TARGET_CHANGE_TARGET', (state, data) => {
+      // + this function can be called from outside
+      // + may otherwise lead to inconsistent state, where followTarget: true, but pos of target and robot do not match (or not?, listen() will always be consistent)
+      // - action should only care about its own state
+      // - can lead to loop
+      // - need only one way to do it, UI may only need to update other modules state, so only update others sate is needed
+      if (state.followTarget) {
+        store.getStore('Robot').dispatch('ROBOT_CHANGE_TARGET', {
+          position: data.position,
+          rotation: data.rotation,
+        })
+      }
+      return Object.assign({}, state, {
+        position: data.position,
+        rotation: data.rotation,
+      })
+    })
+    store.dispatch('TARGET_CHANGE_TARGET', {
+      position: {
+        x: position.x,
+        y: position.y,
+        z: position.z,
+      },
+      rotation: {
+        x: rotation.x,
+        y: rotation.y,
+        z: rotation.z,
+      },
+    })
+  }
+
+  module.exports = store
 })

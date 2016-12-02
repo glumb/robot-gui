@@ -38,15 +38,16 @@
 
 
     <script type="text/javascript">
+        var debug = {}
         requirejs.config({
             baseUrl: 'js',
-            // paths: {
-            //     redux: '../node_modules/redux/dist/redux'
-            // }
+            paths: {
+                State: '/vendor/state/State'
+            }
         });
 
-        require(['Hmi'], function(foo) {
-
+        require(['Hmi'], function(Hmi) {
+            let hmi = new Hmi()
         });
 
         /**
@@ -57,23 +58,6 @@
          * add waypoints
          *
          */
-        var debug = {}
-
-        function init() {
-
-
-            debug = {}
-
-            // var hmi = new Hmi()
-
-
-
-        }
-
-        window.onload = function() {
-
-            init()
-        }
     </script>
 </body>
 

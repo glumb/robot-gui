@@ -86,7 +86,18 @@ const THREERobot = function (V_initial, limits, scene) {
         group.rotation.z = -Math.PI / 2
         group.rotation.y += Math.PI
         joint.rotation.z = +Math.PI / 2
-        group.add(new THREE.AxisHelper(3))
+        // const axisHelper = new THREE.AxisHelper(3)
+        // axisHelper.rotation.x = Math.PI
+        // group.add(axisHelper)
+        const arrowZ = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 3, 0x0000ff)
+        arrowZ.line.material.linewidth = 4
+        group.add(arrowZ)
+        const arrowY = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 3, 0x00ff00)
+        arrowY.line.material.linewidth = 4
+        group.add(arrowY)
+        const arrowX = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 3, 0xff0000)
+        arrowX.line.material.linewidth = 4
+        group.add(arrowX)
         // joint.add(getVectorArrow([0,0,0],[0,0,5]))
         break
     }
