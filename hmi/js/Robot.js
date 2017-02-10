@@ -1,11 +1,19 @@
 define((require, exports, module) => {
   const storeManager = require('State')
+  const Kinematic = require('Kinematic')()
 
   localState = {
     jointOutOfBound: [false, false, false, false, false, false],
   }
   const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
-
+  const geo = [
+    [2.5 + 2.3, 7.3, 0],
+    [0, 13.0, 0],
+    [1, 0, 0],
+    [12.6, 0, 0],
+    [0, -3.6, 0],
+    [0, 0, 0],
+  ]
   const defaultRobotState = {
     target: {
       position: {
@@ -37,7 +45,7 @@ define((require, exports, module) => {
       J5: maxAngleVelocity,
     },
     jointLimits: {
-      J0: [-90, 90],
+      J0: [-190, 190],
       J1: [-58, 90],
       J2: [-135, 40],
       J3: [-90, 75],
@@ -46,48 +54,45 @@ define((require, exports, module) => {
     },
     geometry: {
       V0: {
-        x: 1,
-        y: 1,
-        z: 0,
+        x: geo[0][0],
+        y: geo[0][1],
+        z: geo[0][2],
       },
       V1: {
-        x: 0,
-        y: 10,
-        z: 0,
+        x: geo[1][0],
+        y: geo[1][1],
+        z: geo[1][2],
       },
       V2: {
-        x: 5,
-        y: 0,
-        z: 0,
+        x: geo[2][0],
+        y: geo[2][1],
+        z: geo[2][2],
       },
       V3: {
-        x: 3,
-        y: 0,
-        z: 0,
+        x: geo[3][0],
+        y: geo[3][1],
+        z: geo[3][2],
       },
       V4: {
-        x: 0,
-        y: -3,
-        z: 0,
+        x: geo[4][0],
+        y: geo[4][1],
+        z: geo[4][2],
       },
       V5: {
-        x: 0,
-        y: 0,
-        z: 0,
+        x: geo[5][0],
+        y: geo[5][1],
+        z: geo[5][2],
       },
     },
   }
   const robotStore = storeManager.createStore('Robot', defaultRobotState)
 
-
-  let IK;
+  let IK
 
   function updateIK(geometry) {
-    const geo = Object.values(geometry).map((val, i, array) => {
-      return [val.x, val.y, val.z]
-    })
-    //todo not optimal, since IK is a sideeffect
-    IK = new InverseKinematic(geo, [ // todo remove when using new ik
+    const geo = Object.values(geometry).map((val, i, array) => [val.x, val.y, val.z])
+    // todo not optimal, since IK is a sideeffect
+    IK = new Kinematic(geo, [ // todo remove when using new ik
       [-90, 90],
       [-58, 90],
       [-135, 40],
@@ -97,23 +102,20 @@ define((require, exports, module) => {
     ])
   }
 
-
-  robotStore.listen([state => state.geometry], (geometry)=> {
+  robotStore.listen([state => state.geometry], (geometry) => {
     updateIK(geometry)
   })
 
-
   const calculateAngles = (state, position, rotation) => {
-
     const angles = []
     const result = IK.calculateAngles(
-       position.x,
-       position.y,
-       position.z,
-       rotation.x,
-       rotation.y,
-       rotation.z,
-       angles
+      position.x,
+      position.y,
+      position.z,
+      rotation.x,
+      rotation.y,
+      rotation.z,
+      angles
     )
 
     return {
@@ -125,8 +127,8 @@ define((require, exports, module) => {
   /* --- Reducer --- */
   robotStore.action('ROBOT_CHANGE_TARGET', (state, data) => {
     const {
-       angles,
-       result,
+      angles,
+      result,
     } = calculateAngles(state, data.position, data.rotation)
     return Object.assign({}, state, {
       target: {
@@ -150,14 +152,16 @@ define((require, exports, module) => {
   robotStore.action('ROBOT_CHANGE_ANGLES', (state, angles) => {
     const TCPpose = []
     const result = IK.calculateTCP(
-       angles.A0,
-       angles.A1,
-       angles.A2,
-       angles.A3,
-       angles.A4,
-       angles.A5,
-       TCPpose
+      angles.A0,
+      angles.A1,
+      angles.A2,
+      angles.A3,
+      angles.A4,
+      angles.A5,
+      TCPpose
     )
+
+    IK.calculateAngles(TCPpose[0], TCPpose[1], TCPpose[2], TCPpose[3], TCPpose[4], TCPpose[5], angles)
 
     return Object.assign({}, state, {
       target: {
@@ -174,12 +178,12 @@ define((require, exports, module) => {
       },
     }, {
       angles: {
-        A0: angles.A0,
-        A1: angles.A1,
-        A2: angles.A2,
-        A3: angles.A3,
-        A4: angles.A4,
-        A5: angles.A5,
+        A0: angles[0],
+        A1: angles[1],
+        A2: angles[2],
+        A3: angles[3],
+        A4: angles[4],
+        A5: angles[5],
       },
     })
     // { todo
@@ -191,8 +195,8 @@ define((require, exports, module) => {
     const geo = Object.assign({}, state.geometry, data)
     updateIK(geo)
     const {
-       angles,
-       result,
+      angles,
+      result,
     } = calculateAngles(state, state.target.position, state.target.rotation)
     return Object.assign({}, state, {
       angles: {
@@ -242,7 +246,6 @@ define((require, exports, module) => {
     })
   })
 
-
   module.exports = robotStore
 })
-//todo -> get rid of scene injection using require scene -> threerobot handles 3d view
+// todo -> get rid of scene injection using require scene -> threerobot handles 3d view

@@ -2,15 +2,16 @@ define((require, exports, module) => {
   const Robot = require('Robot')
   const RobotTHREE = require('RobotTHREE')
   const RobotGui = require('Robot.Gui')
-  // const RobotGui = require('Robot.Gui')
+    // const RobotGui = require('Robot.Gui')
   const Target = require('Target')
   const TargetGui = require('Target.Gui')
   const gui = require('UiDat')
-  const io = require('/socket.io/socket.io.js')
   const EventBus = require('EventBus')
   const redux = require('redux')
   const THREEView = require('THREEView')
   const storeManager = require('State')
+  const ws = require('WorkingSpace')
+  const RemoteRobot = require('RemoteRobot')
 
   const logger = store => dispatch => (action, data) => {
     console.group(`ACTION ${action}`)
@@ -70,7 +71,7 @@ define((require, exports, module) => {
     return newState
   }
 
-  storeManager.applyMiddleware(logger, mid)
+  // storeManager.applyMiddleware(logger, mid)
     /* POLYFILL */
 
   const reduce = Function.bind.call(Function.call, Array.prototype.reduce)
@@ -90,9 +91,7 @@ define((require, exports, module) => {
     constructor() {
       const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
 
-
       const store = storeManager.createStore('Hmi', {})
-
 
       const scope = this
       const geometry = [
@@ -221,7 +220,6 @@ define((require, exports, module) => {
         },
       }
 
-
       EventBus.subscribe('ROBOT_CHANGE_ANGLES', (data) => {
         scope.state.Robot.angles = data.payload.angles
 
@@ -251,7 +249,11 @@ define((require, exports, module) => {
       })
         /* THREEJS SCENE SETUP */
 
-     const {scene, renderer, camera} = require('THREEScene')
+      const {
+        scene,
+        renderer,
+        camera,
+      } = require('THREEScene')
       this.scene = scene
       this.renderer = renderer
       this.camera = camera
@@ -314,81 +316,6 @@ define((require, exports, module) => {
         scope.render()
       })
 
-      // REMOTE ROBOT
-      const socket = io()
-
-      let setupComplete = true
-      let ports = []
-
-      socket.emit('info', {}, (info) => {
-        console.log(info)
-        ports = info
-        const remoteRobotGui = gui.addFolder('RemoteRobot')
-
-        remoteRobotGui.add(scope.state, 'port', ports).onChange(() => {
-          socket.emit('setup', {
-            port: scope.state.port,
-          }, (result) => {
-            // doto only if successfull
-            setupComplete = true
-            console.log(`connected: ${result}`)
-          })
-        })
-
-        let interval = null
-        remoteRobotGui.add(scope.state, 'sendAnglesToRobot').onChange(() => {
-          if (setupComplete) {
-            if (scope.state.sendAnglesToRobot) {
-              interval = setInterval(() => {
-                const outOfBound = scope.state.Robot.jointOutOfBound.reduce((previous, current) => {
-                  return previous || current
-                }, false)
-                if (!outOfBound) {
-                  socket.emit('write',
-                    `R0 ${(scope.state.Robot.angles.A0 / (Math.PI * 180)).toFixed(3)} ` +
-                    `R1 ${(scope.state.Robot.angles.A1 / (Math.PI * 180)).toFixed(3)} ` +
-                    `R2 ${(scope.state.Robot.angles.A2 / (Math.PI * 180)).toFixed(3)} ` +
-                    `R3 ${(scope.state.Robot.angles.A3 / (Math.PI * 180)).toFixed(3)} ` +
-                    `R4 ${(scope.state.Robot.angles.A4 / (Math.PI * 180)).toFixed(3)} ` +
-                    `R5 ${(scope.state.Robot.angles.A5 / (Math.PI * 180)).toFixed(3)} \r`,
-                    (res) => {
-                      console.log(res)
-                    })
-                }
-              }, scope.state.interval)
-            } else {
-              clearInterval(interval)
-            }
-          }
-        })
-      })
-
-      socket.on('data', (data) => {
-        console.log(data)
-          // todo
-        // this.Robot.setAngles([20, 1, 1, 1, 1, 1])
-      })
-
-      /* END DAT GUI */
-
-      /* INIT MODULES */
-
-      // this.Robot = new Robot(this.state, this.scene)
-      // this.RobotTHREE = new RobotTHREE(this.state, this.scene)
-      // this.Robot.setVisible(this.state.showRobot)
-      // this.Target = new Target(this.state, this.scene, this.camera, this.renderer, this.cameraControls)
-
-      // remote robot
-      const geometryArray = Object.values(this.state.Robot.geometry).map(val => [val.x, val.y, val.z])
-      const jointLimitsArray = Object.values(this.state.Robot.jointLimits)
-
-      this.THREERemoteRobot = new THREE.Group()
-      this.THREERemoteRobot.visible = scope.state.showRemoteRobot
-      this.scene.add(this.THREERemoteRobot)
-      this.RemoteRobot = new THREERobot(geometryArray, jointLimitsArray, this.THREERemoteRobot)
-
-      /* END INIT MODULES */
-
       /* CONNECT MODULES */
       EventBus.subscribe('Target.change', () => {
         if (scope.state.followTarget) {
@@ -427,10 +354,6 @@ define((require, exports, module) => {
 
       this.render()
 
-      store.listen((state) => {
-        console.log('rendering - state changed')
-        this.render()
-      })
       EventBus.publish('change', {})
     }
 
@@ -440,7 +363,7 @@ define((require, exports, module) => {
 
     targetToTCP() {
       const position = []
-      // this.RobotController.getCurrentPosition(position)
+        // this.RobotController.getCurrentPosition(position)
       this.target.position.x = position[0]
       this.target.position.y = position[1]
       this.target.position.z = position[2]

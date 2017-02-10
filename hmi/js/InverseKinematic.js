@@ -1,6 +1,6 @@
 const Serial = {
   println(text) {
-    // console.log(text)
+    // // console.log(text)
   },
 }
 
@@ -12,16 +12,16 @@ const calculatedJointGeometry = []
 
 const arrows = {}
 
-function addArrow(name, from, to, color, length) {
+function addArrow(name, from, to, color, length = 10) {
   if (arrows.hasOwnProperty(name)) {
     debug.scene.remove(arrows[name])
   }
-  const dir = new THREE.Vector3(to[0], to[1], to[2])
+  const toPoint = new THREE.Vector3(to[0], to[1], to[2])
   const origin = new THREE.Vector3(from[0], from[1], from[2])
-  length = length || dir.sub(origin).length()
-  dir.normalize()
+  // length = length || toPoint.sub(origin).length()
+  // toPoint.normalize()
   color = color || 0xffff00
-  arrows[name] = new THREE.ArrowHelper(dir, origin, length, color, 2, 1)
+  arrows[name] = new THREE.ArrowHelper(toPoint.sub(origin).normalize(), origin, length, color, 2, 1)
   debug.scene.add(arrows[name])
 }
 
@@ -31,10 +31,12 @@ function addVectorArrow(name, from, vector, color, length) {
 
 class InverseKinematic {
   constructor(geometry, jointLimits) {
+    this.robotType = 'AXIS6'
+
     this.OK = 0
     this.OUT_OF_RANGE = 1
     this.OUT_OF_BOUNDS = 2
-      // todo debug remove
+    // todo debug remove
     for (var i = 0; i < 6; i++) {
       const sphereGeom = new THREE.SphereGeometry(1, 32, 32)
       const sphereM = new THREE.Mesh(sphereGeom, new THREE.MeshBasicMaterial({
@@ -42,7 +44,7 @@ class InverseKinematic {
         opacity: 0.5,
         color: 0xfff50,
       }))
-        // debug.scene.add(sphereM)
+      // debug.scene.add(sphereM)
       calculatedJointGeometry.push(sphereM)
     }
 
@@ -78,11 +80,11 @@ class InverseKinematic {
 
     // this.R_corrected[4] += Math.PI / 2;
     this.R_corrected[4] += Math.atan2(geometry[4][1], geometry[4][0])
-    console.log(`---------------------------------${Math.atan2(geometry[4][1], geometry[4][0])}`)
+    // console.log(`---------------------------------${Math.atan2(geometry[4][1], geometry[4][0])}`)
   }
 
   calculateAngles(x, y, z, a, b, c, angles) {
-    console.log(x, y, z, a, b, c)
+    // console.log(x, y, z, a, b, c)
 
     const ca = Math.cos(a)
     const sb = Math.sin(a)
@@ -91,10 +93,14 @@ class InverseKinematic {
     const ce = Math.cos(c)
     const sf = Math.sin(c)
 
-    const targetVectorX = [
+    let targetVectorX = [
       cc * ce,
       cc * sf, -sd,
     ]
+
+    if (this.robotType === 'AXIS4') {
+      targetVectorX = [0, -1, 0]
+    }
 
     const R = [
       this.R_corrected[0],
@@ -120,7 +126,7 @@ class InverseKinematic {
     J[5][1] = y
     J[5][2] = z
 
-    calculatedJointGeometry[5].position.set(J[5][0], J[5][1], J[5][2])
+    // calculatedJointGeometry[5].position.set(J[5][0], J[5][1], J[5][2])
 
     // ---- J4 ----
     // vector
@@ -129,7 +135,7 @@ class InverseKinematic {
     J[4][1] = y - this.V4_length_x_y_z * targetVectorX[1]
     J[4][2] = z - this.V4_length_x_y_z * targetVectorX[2]
 
-    calculatedJointGeometry[4].position.set(J[4][0], J[4][1], J[4][2])
+    // calculatedJointGeometry[4].position.set(J[4][0], J[4][1], J[4][2])
 
     // todo backwards rotation
 
@@ -152,7 +158,7 @@ class InverseKinematic {
     J[1][1] = this.geometry[0][1]
     J[1][2] = -Math.sin(R[0]) * this.geometry[0][0] + Math.cos(R[0]) * this.geometry[0][2]
 
-    calculatedJointGeometry[1].position.set(J[1][0], J[1][1], J[1][2])
+    // calculatedJointGeometry[1].position.set(J[1][0], J[1][1], J[1][2])
 
     // ---- rotate J4 into x,y plane ----
     // # J4 R0
@@ -205,7 +211,7 @@ class InverseKinematic {
     J[2][2] = -tb * tc + ta * e - tb * f * h + tb * g * i + ta * j
 
     // addArrow('J2', [0, 0, 0], J[2])
-    calculatedJointGeometry[2].position.set(J[2][0], J[2][1], J[2][2])
+    // calculatedJointGeometry[2].position.set(J[2][0], J[2][1], J[2][2])
 
     // ---- J3 ----
     // # R0 R1 R2
@@ -214,7 +220,7 @@ class InverseKinematic {
     J[3][1] = d + g * h + f * i + g * k * m + f * l * m + f * k * n - g * l * n
     J[3][2] = -tb * tc + ta * e - tb * f * h + tb * g * i + ta * j - tb * f * k * m + tb * g * l * m + tb * g * k * n + tb * f * l * n + ta * o
 
-    calculatedJointGeometry[3].position.set(J[3][0], J[3][1], J[3][2])
+    // calculatedJointGeometry[3].position.set(J[3][0], J[3][1], J[3][2])
 
     // ---- J4J3 J4J5 ----
     // # J3 J4 J5
@@ -225,7 +231,11 @@ class InverseKinematic {
     // ---- R3 ----
     // J3 J4 J5
 
+    // todo how to always point in one direction traveling from TCP vector
     const J4J5_J4J3_normal_vector = this.cross(J4J5_vector, J4J3_vector)
+    // J4J5_J4J3_normal_vector[0] = Math.abs(J4J5_J4J3_normal_vector[0])
+    // J4J5_J4J3_normal_vector[1] = Math.abs(J4J5_J4J3_normal_vector[1])
+    // J4J5_J4J3_normal_vector[2] = Math.abs(J4J5_J4J3_normal_vector[2])
 
     // addVectorArrow('normal J4', J[4], J4J5_J4J3_normal_vector)
 
@@ -237,7 +247,8 @@ class InverseKinematic {
 
     const reference = this.cross(XZ_parallel_aligned_vector, J4J3_vector)
 
-    // addVectorArrow('normal J4 Y_vectors', J[4], reference)
+    addVectorArrow('normal J4 Y_vectors', J[4], reference, 0xff0000)
+    addVectorArrow('XZ_parallel_aligned_vector', J[4], XZ_parallel_aligned_vector, 0x0000ff)
 
     const tmp = this.dot(reference, J4J5_J4J3_normal_vector)
 
@@ -245,9 +256,9 @@ class InverseKinematic {
 
     R[3] = this.angleBetween(J4J5_J4J3_normal_vector, XZ_parallel_aligned_vector, reference)
 
-    console.log(`------------R3------------- ${R[3]}`)
-    console.log(`------------sign------------- ${sign}`)
-    console.log(`------------this.angleBetween------------- ${this.angleBetween(J4J5_J4J3_normal_vector, XZ_parallel_aligned_vector, reference)}`)
+    // console.log(`------------R3------------- ${R[3]}`)
+    // console.log(`------------sign------------- ${sign}`)
+    // console.log(`------------this.angleBetween------------- ${this.angleBetween(J4J5_J4J3_normal_vector, XZ_parallel_aligned_vector, reference)}`)
 
     // ---- R4 ----
     // #J4 J3 J5
@@ -255,8 +266,8 @@ class InverseKinematic {
     const reference_vector = this.cross(J4J3_vector, J4J5_J4J3_normal_vector)
 
     R[4] += this.angleBetween(J4J5_vector, J4J3_vector, reference_vector)
-      // addVectorArrow('2', J[5], reference_vector, 0x00ff00)
-
+    addVectorArrow('2', J[4], J4J5_J4J3_normal_vector, 0x00ff00)
+    console.log(this.angleBetween2(J4J5_vector, J4J3_vector))
     // ---- R5 ----
 
     const reference_vector3 = this.cross(J4J5_vector, [0, 10, 0])
@@ -281,7 +292,46 @@ class InverseKinematic {
 
     // R[5] += -a
     R[5] += Math.PI / 2
-    R[5] -= this.angleBetween(J4J5_J4J3_normal_vector, targetVectorY, this.cross(targetVectorY, targetVectorX))
+    R[5] -= this.angleBetween(J4J5_J4J3_normal_vector, targetVectorY, this.cross(targetVectorX, targetVectorY))
+
+    if (R[5] > Math.PI) {
+      R[5] = -Math.PI + (R[5] % Math.PI)
+    }
+
+    const PI = Math.PI
+
+    // static configuration
+    // if (R[4] > PI / 2) {
+    //   R[3] -= PI
+    //   R[5] -= PI
+    // }
+    //
+    // R[5] = (-PI + ((R[5] + PI) % (2 * PI))) % (2 * PI)
+
+    // static configuration
+    if (R[3] > PI / 2) {
+      R[3] -= PI
+      R[5] -= PI
+
+      if (R[4] > PI / 2) {
+        // R[4] = R[4] + PI
+        R[4] = PI / 2 - (R[4] - PI / 2)
+      } else {
+        // R[4] -R[4] + PI
+        R[4] = PI / 2 + (PI / 2 - R[4])
+      }
+    } else if (R[3] < -PI / 2) {
+      R[3] += PI
+      R[5] += PI
+
+      if (R[4] > PI / 2) {
+        R[4] = PI / 2 - (R[4] - PI / 2)
+      } else {
+        R[4] = PI / 2 + (PI / 2 - R[4])
+      }
+    }
+
+    R[5] = (-PI + ((R[5] + PI) % (2 * PI))) % (2 * PI)
 
     // R[5] %= 360 / 180 * Math.PI
     //   // configuration
@@ -383,6 +433,11 @@ class InverseKinematic {
   }
 
   calculateCoordinates(R0, R1, R2, R3, R4, R5, jointsResult) {
+    if (this.robotType === 'AXIS4') {
+      R3 = 0
+      R4 = -(R1 + R2)
+    }
+
     const a = Math.cos(R0)
     const b = Math.sin(R0)
     const c = this.geometry[0][0]
@@ -408,8 +463,8 @@ class InverseKinematic {
     const w = this.geometry[4][0]
     const x = this.geometry[4][1]
     const y = this.geometry[4][2]
-    const A = Math.cos(R5)
-    const B = Math.sin(R5)
+    const A = Math.cos(R5 - Math.PI)
+    const B = Math.sin(R5 - Math.PI)
     const C = 0 // this.geometry[5][0]
     const D = 0 // this.geometry[5][1]
     const E = 0 // this.geometry[5][2]
@@ -438,43 +493,39 @@ class InverseKinematic {
     jointsResult[5][1] = jointsResult[4][1] + g * k * u * w + f * l * u * w + f * k * p * v * w - g * l * p * v * w + f * k * p * u * x - g * l * p * u * x - g * k * v * x - f * l * v * x - f * k * q * y + g * l * q * y
     jointsResult[5][2] = jointsResult[4][2] - b * f * k * u * w + b * g * l * u * w + b * g * k * p * v * w + b * f * l * p * v * w + a * q * v * w + b * g * k * p * u * x + b * f * l * p * u * x + a * q * u * x + b * f * k * v * x - b * g * l * v * x + a * p * y - b * g * k * q * y - b * f * l * q * y
 
-    let M = [
-      [-B * b * p - B * a * g * k * q - B * a * f * l * q + A * a * f * k * u - A * a * g * l * u - A * a * g * k * p * v - A * a * f * l * p * v + A * b * q * v, -a * g * k * p * u - a * f * l * p * u + b * q * u - a * f * k * v + a * g * l * v, A * b * p + A * a * g * k * q + A * a * f * l * q + B * a * f * k * u - B * a * g * l * u - B * a * g * k * p * v - B * a * f * l * p * v + B * b * q * v],
-      [B * f * k * q - B * g * l * q + A * g * k * u + A * f * l * u + A * f * k * p * v - A * g * l * p * v, f * k * p * u - g * l * p * u - g * k * v - f * l * v, -A * f * k * q + A * g * l * q + B * g * k * u + B * f * l * u + B * f * k * p * v - B * g * l * p * v],
-      [-B * a * p + B * b * g * k * q + B * b * f * l * q - A * b * f * k * u + A * b * g * l * u + A * b * g * k * p * v + A * b * f * l * p * v + A * a * q * v, b * g * k * p * u + b * f * l * p * u + a * q * u + b * f * k * v - b * g * l * v, A * a * p - A * b * g * k * q - A * b * f * l * q - B * b * f * k * u + B * b * g * l * u + B * b * g * k * p * v + B * b * f * l * p * v + B * a * q * v],
-    ]
     // const M = [
-    //     [B * f * k * q - B * g * l * q + A * g * k * u + A * f * l * u + A * f * k * p * v - A * g * l * p * v, f * k * p * u - g * l * p * u - g * k * v - f * l * v, -A * f * k * q + A * g * l * q + B * g * k * u + B * f * l * u + B * f * k * p * v - B * g * l * p * v],
-    //     [B * b * p + B * a * g * k * q + B * a * f * l * q - A * a * f * k * u + A * a * g * l * u + A * a * g * k * p * v + A * a * f * l * p * v - A * b * q * v, a * g * k * p * u + a * f * l * p * u - b * q * u + a * f * k * v - a * g * l * v, -A * b * p - A * a * g * k * q - A * a * f * l * q - B * a * f * k * u + B * a * g * l * u + B * a * g * k * p * v + B * a * f * l * p * v - B * b * q * v],
-    //     [-B * a * p + B * b * g * k * q + B * b * f * l * q - A * b * f * k * u + A * b * g * l * u + A * b * g * k * p * v + A * b * f * l * p * v + A * a * q * v, b * g * k * p * u + b * f * l * p * u + a * q * u + b * f * k * v - b * g * l * v, A * a * p - A * b * g * k * q - A * b * f * l * q - B * b * f * k * u + B * b * g * l * u + B * b * g * k * p * v + B * b * f * l * p * v + B * a * q * v],
+    //     [B * f * k * q - B * g * l * q + A * g * k * u + A * f * l * u + A * f * k * p * v - A * g * l * p * v, f * k * p * u - g * l * p * u - g * k * v - f * l * v, -A * f * k * q + A * g * l * q - B * g * k * u - B * f * l * u - B * f * k * p * v - B * g * l * p * v],
+    //     [B * b * p - B * a * g * k * q - B * a * f * l * q - A * a * f * k * u + A * a * g * l * u + A * a * g * k * p * v + A * a * f * l * p * v - A * b * q * v, a * g * k * p * u + a * f * l * p * u - b * q * u + a * f * k * v - a * g * l * v, -A * b * p - A * a * g * k * q - A * a * f * l * q - B * a * f * k * u - B * a * g * l * u - B * a * g * k * p * v - B * a * f * l * p * v - B * b * q * v],
+    //     [-B * a * p - B * b * g * k * q - B * b * f * l * q - A * b * f * k * u + A * b * g * l * u + A * b * g * k * p * v + A * b * f * l * p * v + A * a * q * v, b * g * k * p * u + b * f * l * p * u + a * q * u + b * f * k * v - b * g * l * v, A * a * p - A * b * g * k * q - A * b * f * l * q - B * b * f * k * u - B * b * g * l * u - B * b * g * k * p * v - B * b * f * l * p * v - B * a * q * v],
     // ]
-    M = [
-[a * g * k * p * u + a * f * l * p * u - b * q * u + a * f * k * v - a * g * l * v,	-B * b * p - B * a * g * k * q - B * a * f * l * q + A * a * f * k * u - A * a * g * l * u - A * a * g * k * p * v - A * a * f * l * p * v + A * b * q * v,	A * b * p + A * a * g * k * q + A * a * f * l * q + B * a * f * k * u - B * a * g * l * u - B * a * g * k * p * v - B * a * f * l * p * v + B * b * q * v],
-[-f * k * p * u + g * l * p * u + g * k * v + f * l * v, B * f * k * q - B * g * l * q + A * g * k * u + A * f * l * u + A * f * k * p * v - A * g * l * p * v, -A * f * k * q + A * g * l * q + B * g * k * u + B * f * l * u + B * f * k * p * v - B * g * l * p * v],
-[-b * g * k * p * u - b * f * l * p * u - a * q * u - b * f * k * v + b * g * l * v,	-B * a * p + B * b * g * k * q + B * b * f * l * q - A * b * f * k * u + A * b * g * l * u + A * b * g * k * p * v + A * b * f * l * p * v + A * a * q * v,	A * a * p - A * b * g * k * q - A * b * f * l * q - B * b * f * k * u + B * b * g * l * u + B * b * g * k * p * v + B * b * f * l * p * v + B * a * q * v],]
-      // todo convert to euler angles
-      //
-      // -A * b * p + A * a * g * k * q + A * a * f * l * q - B * a * f * k * u + B * a * g * l * u + B * a * g * k * p * v + B * a * f * l * p * v + B * b * q * v
-      //
-      //     if (R31 !== 1 || R31 !== -1) {
-      //   θ1 = −Math.asin(R31)
-      //   θ2 = Math.PI− θ1
-      //   ψ1 = Math.atan2(R32 / Math.cos(θ1), R33 / Math.cos(θ1))
-      //   ψ2 = Math.atan2(R32 / Math.cos(θ2), R33 / Math.cos(θ2))
-      //   φ1 = Math.atan2(R21 / Math.cos(θ1), R11 / Math.cos(θ1))
-      //   φ2 = Math.atan2(R21 / Math.cos(θ2), R11 / Math.cos(θ2))
-      // } else {
-      //   φ = 0 // anything; can set to
-      //   if (R31 = −1) {
-      //     θ = Math.PI / 2
-      //     ψ = φ + Math.atan2(R12, R13)
-      //   } else {
-      //     θ = −Math.PI / 2
-      //     ψ = −φ + Math.atan2(−R12, −R13)
-      //   }
-      // }
-      //
-      // http://www.staff.city.ac.uk/~sbbh653/publications/euler.pdf
+    const M = [
+      [a * g * k * p * u + a * f * l * p * u - b * q * u + a * f * k * v - a * g * l * v, +B * b * p - B * a * g * k * q + B * a * f * l * q + A * a * f * k * u - A * a * g * l * u - A * a * g * k * p * v - A * a * f * l * p * v + A * b * q * v, A * b * p + A * a * g * k * q + A * a * f * l * q - B * a * f * k * u + B * a * g * l * u + B * a * g * k * p * v + B * a * f * l * p * v - B * b * q * v],
+      [-f * k * p * u + g * l * p * u + g * k * v + f * l * v, B * f * k * q + B * g * l * q + A * g * k * u + A * f * l * u + A * f * k * p * v - A * g * l * p * v, -A * f * k * q + A * g * l * q - B * g * k * u - B * f * l * u - B * f * k * p * v + B * g * l * p * v],
+      [-b * g * k * p * u - b * f * l * p * u - a * q * u - b * f * k * v + b * g * l * v, +B * a * p - B * b * g * k * q - B * b * f * l * q - A * b * f * k * u + A * b * g * l * u + A * b * g * k * p * v + A * b * f * l * p * v + A * a * q * v, A * a * p - A * b * g * k * q - A * b * f * l * q + B * b * f * k * u - B * b * g * l * u - B * b * g * k * p * v - B * b * f * l * p * v - B * a * q * v],
+    ]
+    // todo convert to euler angles
+    //
+    // -A * b * p + A * a * g * k * q + A * a * f * l * q +B * a * f * k * u - B * a * g * l * u - B * a * g * k * p * v - B * a * f * l * p * v - B * b * q * v
+    //
+    //     if (R31 !== 1 || R31 !== -1) {
+    //   θ1 = −Math.asin(R31)
+    //   θ2 = Math.PI− θ1
+    //   ψ1 = Math.atan2(R32 / Math.cos(θ1), R33 / Math.cos(θ1))
+    //   ψ2 = Math.atan2(R32 / Math.cos(θ2), R33 / Math.cos(θ2))
+    //   φ1 = Math.atan2(R21 / Math.cos(θ1), R11 / Math.cos(θ1))
+    //   φ2 = Math.atan2(R21 / Math.cos(θ2), R11 / Math.cos(θ2))
+    // } else {
+    //   φ = 0 // anything; can set to
+    //   if (R31 = −1) {
+    //     θ = Math.PI / 2
+    //     ψ = φ + Math.atan2(R12, R13)
+    //   } else {
+    //     θ = −Math.PI / 2
+    //     ψ = −φ + Math.atan2(−R12, −R13)
+    //   }
+    // }
+    //
+    // http://www.staff.city.ac.uk/~sbbh653/publications/euler.pdf
 
     // debug.mesh.matrixAutoUpdate = false
     // debug.mesh.matrix.set(
@@ -506,22 +557,21 @@ class InverseKinematic {
     jointsResult[5][4] = θ
     jointsResult[5][5] = φ
 
-    console.log('+++++++++forward KINEMATICS++++++++++')
+    // console.log('+++++++++forward KINEMATICS++++++++++')
     Serial.println(`J0 X ${jointsResult[0][0]} Y ${jointsResult[0][1]} Z ${jointsResult[0][2]}`)
     Serial.println(`J1 X ${jointsResult[1][0]} Y ${jointsResult[1][1]} Z ${jointsResult[1][2]}`)
     Serial.println(`J2 X ${jointsResult[2][0]} Y ${jointsResult[2][1]} Z ${jointsResult[2][2]}`)
     Serial.println(`J4 X ${jointsResult[4][0]} Y ${jointsResult[4][1]} Z ${jointsResult[4][2]}`)
     Serial.println(`J5 X ${jointsResult[5][0]} Y ${jointsResult[5][1]} Z ${jointsResult[5][2]}`)
     Serial.println(`J5 A ${jointsResult[5][3]} B ${jointsResult[5][4]} C ${jointsResult[5][5]}`)
-    console.log('---------forward KINEMATICS----------')
+    // console.log('---------forward KINEMATICS----------')
   }
 
-  cross(vectorA, vectorB, result) {
-    return result = [
-      vectorA[1] * vectorB[2] - vectorA[2] * vectorB[1],
-      vectorA[2] * vectorB[0] - vectorA[0] * vectorB[2],
-      vectorA[0] * vectorB[1] - vectorA[1] * vectorB[0],
-    ]
+  cross(vectorA, vectorB, result = []) {
+    result[0] = vectorA[1] * vectorB[2] - vectorA[2] * vectorB[1]
+    result[1] = vectorA[2] * vectorB[0] - vectorA[0] * vectorB[2]
+    result[2] = vectorA[0] * vectorB[1] - vectorA[1] * vectorB[0]
+    return result
   }
 
   dot(vectorA, vectorB) {
@@ -556,4 +606,32 @@ class InverseKinematic {
   length2(a, b) {
     return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2))
   }
+
+  angleBetween2(v1, v2) {
+    let angle
+    // turn vectors into unit vectors
+    // this.normalize(v1,v1)
+    // this.normalize(v2,v2)
+    //
+    // var angle = Math.acos(this.dot(v1, v2))
+    // // if no noticable rotation is available return zero rotation
+    // // this way we avoid Cross product artifacts
+    // if (Math.abs(angle) < 0.0001) return 0
+    // // in this case there are 2 lines on the same axis
+    // // // angle = atan2(norm(cross(a, b)), dot(a, b))
+    const cross = this.cross(v1, v2)
+
+    console.log()
+    return Math.atan2(this.length3(cross), this.dot(v1, v2))
+  }
+  normalize(vector, result) {
+    const length = Math.sqrt((vector[0] * vector[0]) + (vector[1] * vector[1]) + (vector[2] * vector[2]))
+    result[0] = vector[0] / length
+    result[1] = vector[1] / length
+    result[2] = vector[2] / length
+  }
+}
+
+function kinematic() {
+  return InverseKinematic
 }

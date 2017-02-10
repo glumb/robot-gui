@@ -41,8 +41,10 @@ define((require, exports, module) => {
             state.geometry.V4.z =
                state.geometry.V4.x = 0
     }
-    for (const child of THREESimulationRobot.children) {
-      THREESimulationRobot.remove(child)
+
+    while (THREESimulationRobot.children.length)
+    {
+      THREESimulationRobot.remove(THREESimulationRobot.children[0]);
     }
     // object to nested arrays
     const geometry = Object.values(state.geometry).map((val, i, array) => {

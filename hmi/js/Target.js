@@ -1,8 +1,12 @@
 define((require, exports, module) => {
   const EventBus = require('EventBus')
-  const gui = require('UiDat')
   const storeManager = require('State')
-  const {scene, camera, renderer} = require('THREEScene')
+  const robotStore = require('Robot')
+  const {
+    scene,
+    camera,
+    renderer,
+  } = require('THREEScene')
 
   /**
    * + state per module
@@ -49,6 +53,13 @@ define((require, exports, module) => {
     })
   })
 
+  store.action('SET_EULER_RINGS_VISIBLE', (state, data) => Object.assign({}, state, {
+    eulerRingsVisible: data,
+  }))
+  store.action('SET_CONTROL_VISIBLE', (state, data) => Object.assign({}, state, {
+    controlVisible: data,
+  }))
+
   const sphereGeo = new THREE.CylinderGeometry(1, 1, 1 * 2, 32)
   const target = new THREE.Group()
   const targetCylinder = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({
@@ -84,13 +95,13 @@ define((require, exports, module) => {
 
     // create ring shape
     const circleMesh = new THREE.Mesh(
-       new THREE.TorusGeometry(radius, 0.05, 6, 50),
-       ringMaterial
+      new THREE.TorusGeometry(radius, 0.05, 6, 50),
+      ringMaterial
     )
 
     const sphereMesh = new THREE.Mesh(
-       new THREE.SphereGeometry(sphere_radius, 12, 10),
-       ringMaterial
+      new THREE.SphereGeometry(sphere_radius, 12, 10),
+      ringMaterial
     )
     sphereMesh.position.x = radius
 
@@ -197,49 +208,7 @@ define((require, exports, module) => {
   })
   control.attach(target)
 
-
   scene.add(control)
-
-  // GUI
-  // TARGET
-
-  // const targetGUI = gui.addFolder('target')
-  //
-  // targetGUI.add(store.getState(), 'followTarget').onChange(() => {
-  //   store.dispatch('CHANGE_FOLLOW_TARGET', !store.getState().followTarget)
-  // }).listen()
-  // targetGUI.add({toggleSpace}, 'toggleSpace')
-  // targetGUI.add(store.getState(), 'manipulate', ['translate', 'rotate']).onChange(() => {
-  //   setMode(store.getState().manipulate)
-  // }).listen()
-  // targetGUI.add(target.position, 'x').step(0.1).onChange(() => {
-  //   targetChangedAction()
-  // }).listen()
-  // targetGUI.add(target.position, 'y').step(0.1).onChange(() => {
-  //   targetChangedAction()
-  // }).listen()
-  // targetGUI.add(target.position, 'z').step(0.1).onChange(() => {
-  //   targetChangedAction()
-  // }).listen()
-  //
-  // targetGUI.add(target.rotation, 'x').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
-  //   targetChangedAction()
-  // })
-  // targetGUI.add(target.rotation, 'y').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
-  //   targetChangedAction()
-  // })
-  // targetGUI.add(target.rotation, 'z').min(-Math.PI).max(Math.PI).listen().step(0.01).onChange(() => {
-  //   targetChangedAction()
-  // })
-  // targetGUI.add(store.getState(), 'showEulerRings').onChange(() => {
-  //   eulerRings.visible = store.getState().showEulerRings
-  //   EventBus.publish('VIEW_RENDER', {}) // dont cann View.render() simce there may be multiple view instances
-  // })
-  // targetGUI.add(store.getState(), 'showControls').onChange(() => {
-  //   control.visible = store.getState().showControls
-  //   // cameraControls.enabled = store.getState().showControls // not working
-  //   EventBus.publish('VIEW_RENDER', {}) // dont cann View.render() simce there may be multiple view instances
-  // })
 
   eulerRings.visible = store.getState().showEulerRings
   control.visible = store.getState().showControls
@@ -262,8 +231,8 @@ define((require, exports, module) => {
     })
   }, false)
 
-
   store.action('CONTROL_SPACE_TOGGLE', state => state.controlSpace, controlSpace => ((controlSpace === 'local') ? 'world' : 'local'))
+
   function toggleSpace() {
     store.dispatch('CONTROL_SPACE_TOGGLE')
   }
@@ -293,24 +262,25 @@ define((require, exports, module) => {
     })
   }
 
-  function setTarget(position, rotation) {
-    store.action('TARGET_CHANGE_TARGET', (state, data) => {
-      // + this function can be called from outside
-      // + may otherwise lead to inconsistent state, where followTarget: true, but pos of target and robot do not match (or not?, listen() will always be consistent)
-      // - action should only care about its own state
-      // - can lead to loop
-      // - need only one way to do it, UI may only need to update other modules state, so only update others sate is needed
-      if (state.followTarget) {
-        store.getStore('Robot').dispatch('ROBOT_CHANGE_TARGET', {
-          position: data.position,
-          rotation: data.rotation,
-        })
-      }
-      return Object.assign({}, state, {
+  store.action('TARGET_CHANGE_TARGET', (state, data) => {
+    // + this function can be called from outside
+    // + may otherwise lead to inconsistent state, where followTarget: true, but pos of target and robot do not match (or not?, listen() will always be consistent)
+    // - action should only care about its own state
+    // - can lead to loop
+    // - need only one way to do it, UI may only need to update other modules state, so only update others sate is needed
+    if (state.followTarget) {
+      store.getStore('Robot').dispatch('ROBOT_CHANGE_TARGET', {
         position: data.position,
         rotation: data.rotation,
       })
+    }
+    return Object.assign({}, state, {
+      position: data.position,
+      rotation: data.rotation,
     })
+  })
+
+  function setTarget(position, rotation) {
     store.dispatch('TARGET_CHANGE_TARGET', {
       position: {
         x: position.x,

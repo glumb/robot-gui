@@ -1,5 +1,4 @@
 define((require, exports, module) => {
-
   const storeManager = require('State')
 
   const THREEStore = storeManager.createStore('THREE', {})
@@ -17,7 +16,7 @@ define((require, exports, module) => {
   // create a scene
   const scene = new THREE.Scene()
 
-
+  debug.scene = scene
   // toggle camera mode
   const perspectiveCamera = true
   let camera
@@ -44,7 +43,7 @@ define((require, exports, module) => {
   scene.add(light2)
 
   cameraControls = new THREE.OrbitControls(camera, renderer.domElement)
-  cameraControls.addEventListener('change', ()=>renderer.render(scene, camera))
+  cameraControls.addEventListener('change', () => renderer.render(scene, camera))
 
   function onWindowResize() {
     if (perspectiveCamera) {
@@ -59,7 +58,7 @@ define((require, exports, module) => {
     }
 
     renderer.setSize(window.innerWidth, window.innerHeight)
-    render()
+    renderer.render(scene, camera)
   }
 
   window.addEventListener('resize', onWindowResize, false)
@@ -75,11 +74,11 @@ define((require, exports, module) => {
 
   /* END THREEJS SCENE SETUP */
 
-  THREEStore.listen(()=>{
-    //kickass trick to render after other listeners. Stack and stuff
+  THREEStore.listen(() => {
+    // kickass trick to render after other listeners. Stack and stuff
     setTimeout(() => {
-      renderer.render(scene,camera)
-    },0)
+      renderer.render(scene, camera)
+    }, 0)
   })
 
   module.exports.scene = scene

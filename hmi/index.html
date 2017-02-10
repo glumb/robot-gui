@@ -21,7 +21,7 @@
     <script src="vendor/three.js/TransformControls.js"></script>
     <script src="vendor/EventDispatcher.js"></script>
     <script src="js/THREERobot.js"></script>
-    <script src="js/InverseKinematic.js"></script>
+    <!--<script src="js/InverseKinematic.js"></script>-->
     <script src="js/Servo.js"></script>
     <script src="js/RobotController.js"></script>
     <!-- <script src="js/dat.gui.min.js"></script> -->
@@ -42,7 +42,13 @@
         requirejs.config({
             baseUrl: 'js',
             paths: {
-                State: '/vendor/state/State'
+                State: '/vendor/state/State',
+                Kinematic: 'InverseKinematic'
+            },
+            shim: {
+                'Kinematic': {
+                    exports: 'kinematic'
+                }
             }
         });
 

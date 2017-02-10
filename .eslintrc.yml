@@ -1,0 +1,20 @@
+extends: airbnb
+plugins:
+  - react
+  - jsx-a11y
+  - import
+rules:
+  semi: ["error", "never"]
+  no-plusplus: 0
+  no-restricted-syntax: ["off", "ForInStatement"]
+  max-len: 0
+  newline-per-chained-call: 0
+  no-undef: 1
+  "no-param-reassign": [2, {"props": false}]
+globals:
+  document: true
+  THREE: true
+  window: true
+  debug: true
+  THREERobot: true
+  define: true

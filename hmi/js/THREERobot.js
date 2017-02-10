@@ -131,7 +131,7 @@ THREERobot.prototype = {
     this.robotBones[2].rotation.z = angles[2]
     this.robotBones[3].rotation.x = angles[3]
     this.robotBones[4].rotation.z = angles[4]
-    this.robotBones[5].rotation.y = angles[5]
+    this.robotBones[5].rotation.y = -angles[5]
   },
 
   setAngle(index, angle) {
