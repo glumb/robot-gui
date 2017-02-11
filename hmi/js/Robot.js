@@ -7,11 +7,11 @@ define((require, exports, module) => {
   }
   const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
   const geo = [
-    [2.5 + 2.3, 7.3, 0],
-    [0, 13.0, 0],
-    [1, 0, 0],
+    [2.5 + 2.3, 0, 7.3],
+    [0, 0, 13.0],
+    [1, 0, 2],
     [12.6, 0, 0],
-    [0, -3.6, 0],
+    [0, 0, -3.6],
     [0, 0, 0],
   ]
   const defaultRobotState = {

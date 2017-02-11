@@ -24,14 +24,15 @@ define((require, exports, module) => {
     camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000)
   } else {
     camera = new THREE.OrthographicCamera(
-       window.innerWidth / -2,
-       window.innerWidth / 2,
-       window.innerHeight / 2,
-       window.innerHeight / -2, -500, 1000)
+      window.innerWidth / -2,
+      window.innerWidth / 2,
+      window.innerHeight / 2,
+      window.innerHeight / -2, -500, 1000)
     camera.zoom = 20
     camera.updateProjectionMatrix()
   }
 
+  camera.up.set(0, 0, 1)
   camera.position.set(25, 25, -25)
   scene.add(camera)
 
@@ -67,6 +68,7 @@ define((require, exports, module) => {
   const step = 20
 
   const gridHelper = new THREE.GridHelper(size, step)
+  gridHelper.rotation.x = Math.PI / 2
   scene.add(gridHelper)
 
   const axisHelper = new THREE.AxisHelper(5)

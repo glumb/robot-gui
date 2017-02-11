@@ -48,6 +48,14 @@ class InverseKinematic {
       calculatedJointGeometry.push(sphereM)
     }
 
+    for (var i = 0; i < geometry.length; i++) {
+      const tmp = geometry[i][1]
+      geometry[i][0] = geometry[i][0]
+      geometry[i][1] = geometry[i][2]
+      geometry[i][2] = -tmp
+    }
+
+
     this.V1_length_x_y = Math.sqrt(Math.pow(geometry[1][0], 2) + Math.pow(geometry[1][1], 2))
     this.V4_length_x_y_z = Math.sqrt(Math.pow(geometry[4][0], 2) + Math.pow(geometry[4][1], 2) + Math.pow(geometry[4][2], 2))
 
@@ -58,7 +66,6 @@ class InverseKinematic {
       this.jointLimits[i][1] = jointLimits[i][1] / 180 * Math.PI
     }
 
-    this.geometry = geometry
 
     this.J_initial_absolute = []
     const tmpPos = [0, 0, 0]
@@ -81,9 +88,13 @@ class InverseKinematic {
     // this.R_corrected[4] += Math.PI / 2;
     this.R_corrected[4] += Math.atan2(geometry[4][1], geometry[4][0])
     // console.log(`---------------------------------${Math.atan2(geometry[4][1], geometry[4][0])}`)
+    this.geometry = geometry
   }
 
   calculateAngles(x, y, z, a, b, c, angles) {
+    // const yt = y
+    // y = z
+    // z = -yt
     // console.log(x, y, z, a, b, c)
 
     const ca = Math.cos(a)
@@ -95,7 +106,8 @@ class InverseKinematic {
 
     let targetVectorX = [
       cc * ce,
-      cc * sf, -sd,
+      sd,
+      cc * sf,
     ]
 
     if (this.robotType === 'AXIS4') {
@@ -123,8 +135,8 @@ class InverseKinematic {
     // ---- J5 ----
 
     J[5][0] = x
-    J[5][1] = y
-    J[5][2] = z
+    J[5][1] = z
+    J[5][2] = -y
 
     // calculatedJointGeometry[5].position.set(J[5][0], J[5][1], J[5][2])
 
@@ -132,8 +144,8 @@ class InverseKinematic {
     // vector
 
     J[4][0] = x - this.V4_length_x_y_z * targetVectorX[0]
-    J[4][1] = y - this.V4_length_x_y_z * targetVectorX[1]
-    J[4][2] = z - this.V4_length_x_y_z * targetVectorX[2]
+    J[4][1] = z - this.V4_length_x_y_z * targetVectorX[1]
+    J[4][2] = -y - this.V4_length_x_y_z * targetVectorX[2]
 
     // calculatedJointGeometry[4].position.set(J[4][0], J[4][1], J[4][2])
 
@@ -286,8 +298,8 @@ class InverseKinematic {
     //    b*c
     const targetVectorY = [
       sb * sd * ce - sf * ca,
-      sb * sd * sf + ce * ca,
       sb * cc,
+      -(sb * sd * sf + ce * ca),
     ]
 
     // R[5] += -a

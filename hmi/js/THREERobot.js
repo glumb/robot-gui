@@ -7,9 +7,7 @@ const THREERobot = function (V_initial, limits, scene) {
   const scope = this
 
   let parentObject = this.THREE
-  let x = 0,
-    y = 0,
-    z = 0
+  // parentObject.rotation.x = Math.PI / 2
 
   // let colors = [
   //     0x05668D,
@@ -64,31 +62,39 @@ const THREERobot = function (V_initial, limits, scene) {
     }))
 
     const joint = new THREE.Group()
-      // joint.add(jointMesh1, jointMesh2)
+    // joint.add(jointMesh1, jointMesh2)
     joint.add(jointMeshMax, jointMeshMin, jointMesh1)
 
     scope.joints.push(joint)
 
     switch (jointNumber) {
-      case 1:
-      case 2:
+      case 0:
         joint.rotation.x = Math.PI / 2
         break
+      case 1:
+      // joint.rotation.x = Math.PI / 2
+        break
+      case 2:
+      // joint.rotation.x = Math.PI / 2
+        break
       case 4:
-        joint.rotation.x = Math.PI / 2
-        joint.rotation.y = -Math.PI / 2
+      // joint.rotation.x = Math.PI / 2
+      // joint.rotation.y = -Math.PI / 2
         break
       case 3:
         joint.rotation.z = Math.PI / 2
-        joint.rotation.y = Math.PI
+      // joint.rotation.y = Math.PI
         break
       case 5:
-        group.rotation.z = -Math.PI / 2
-        group.rotation.y += Math.PI
-        joint.rotation.z = +Math.PI / 2
-        // const axisHelper = new THREE.AxisHelper(3)
-        // axisHelper.rotation.x = Math.PI
-        // group.add(axisHelper)
+        joint.rotation.x = Math.PI / 2
+        group.rotation.x = Math.PI
+        group.rotation.z = Math.PI
+      // group.rotation.z = -Math.PI / 2
+      // group.rotation.y += Math.PI
+      // joint.rotation.z = +Math.PI / 2
+      // const axisHelper = new THREE.AxisHelper(3)
+      // axisHelper.rotation.x = Math.PI
+      // group.add(axisHelper)
         const arrowZ = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 3, 0x0000ff)
         arrowZ.line.material.linewidth = 4
         group.add(arrowZ)
@@ -98,13 +104,17 @@ const THREERobot = function (V_initial, limits, scene) {
         const arrowX = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 3, 0xff0000)
         arrowX.line.material.linewidth = 4
         group.add(arrowX)
-        // joint.add(getVectorArrow([0,0,0],[0,0,5]))
+      // joint.add(getVectorArrow([0,0,0],[0,0,5]))
         break
     }
 
     group.add(joint)
     return group
   }
+
+  let x = 0,
+    y = 0,
+    z = 0
 
   for (let i = 0; i < V_initial.length; i++) {
     const link = V_initial[i]
@@ -113,6 +123,7 @@ const THREERobot = function (V_initial, limits, scene) {
     x = link[0]
     y = link[1]
     z = link[2]
+    console.log(link[0], link[1], link[2])
     parentObject.add(linkGeo)
     parentObject = linkGeo
     this.robotBones.push(linkGeo)
@@ -126,12 +137,12 @@ const THREERobot = function (V_initial, limits, scene) {
 THREERobot.prototype = {
   setAngles(angles) {
     this.angles = angles
-    this.robotBones[0].rotation.y = angles[0]
-    this.robotBones[1].rotation.z = angles[1]
-    this.robotBones[2].rotation.z = angles[2]
+    this.robotBones[0].rotation.z = angles[0]
+    this.robotBones[1].rotation.y = -angles[1]
+    this.robotBones[2].rotation.y = -angles[2]
     this.robotBones[3].rotation.x = angles[3]
-    this.robotBones[4].rotation.z = angles[4]
-    this.robotBones[5].rotation.y = -angles[5]
+    this.robotBones[4].rotation.y = -angles[4]
+    this.robotBones[5].rotation.z = -angles[5]
   },
 
   setAngle(index, angle) {
