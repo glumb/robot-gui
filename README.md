@@ -2,7 +2,7 @@
 A three.js based 3D robot interface. 
 
 # How To
-Download or clone. Open `index.html`. Enjoy 🤖😀
+Download or clone. Open `index.html` or [robot.glumb.de](http://robot.glumb.de). Enjoy 🤖😀 
 
 You may need to use Chrome, since some ES6 features are not supported in other browsers yet.
 
