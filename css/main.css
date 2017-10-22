@@ -1,0 +1,96 @@
+body {
+	overflow	: hidden;
+	padding		: 0;
+	margin		: 0;
+
+	color		: #222;
+	background-color: #BBB;
+	font-family	: arial;
+	font-size	: 100%;
+}
+#info .top {
+	position	: absolute;
+	top		: 0px;
+	width		: 100%;
+	padding		: 5px;
+	text-align	: center;
+}
+#info a {
+	color		: #66F;
+	text-decoration	: none;
+}
+#info a:hover {
+	text-decoration	: underline;
+}
+#info .bottom {
+	position	: absolute;
+	bottom		: 0px;
+	right		: 5px;
+	padding		: 5px;
+}
+
+
+/* DAT GUI */
+
+.dg.main.taller-than-window .close-button {
+    border-top: 1px solid #ddd!important;
+}
+
+.dg.main .close-button {
+    background-color: #ccc!important;
+}
+
+.dg.main .close-button:hover {
+    background-color: #ddd!important;
+}
+
+.dg {
+    color: #555!important;
+    text-shadow: none !important;
+}
+
+.dg.main::-webkit-scrollbar {
+    background: #fafafa!important;
+}
+
+.dg.main::-webkit-scrollbar-thumb {
+    background: #bbb!important;
+}
+
+div.dg li:not(.folder) {
+    background: #e8e8e8!important;
+    border-color: #dadada;
+}
+
+.dg li.save-row .button {
+    text-shadow: none !important;
+}
+
+.dg li.title {
+    background: #e8e8e8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat!important;
+}
+
+.dg .cr.function:hover,.dg .cr.boolean:hover {
+    background: #fff!important;
+}
+
+.dg .c input[type=text] {
+    background: #f9f9f9!important;
+}
+
+.dg .c input[type=text]:hover {
+    background: #eee!important;
+}
+
+.dg .c input[type=text]:focus {
+    background: #eee!important;
+    color: #555!important;
+}
+
+.dg .c .slider {
+    background: #e9e9e9!important;
+}
+
+.dg .c .slider:hover {
+    background: #eee!important;
+}

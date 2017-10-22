@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Cow tests</title>
+    <link rel="stylesheet" media="all" href="../../../../node_modules/mocha/mocha.css">
+</head>
+
+<body>
+    <div id="mocha">
+        <p><a href=".">Index</a></p>
+    </div>
+    <div id="messages"></div>
+    <div id="fixtures"></div>
+
+    <script src="../../../js/require.js" charset="utf-8"></script>
+
+    <script>
+        requirejs.config({
+            baseUrl: '/vendor/state/',
+            paths: {
+                mocha: '/node_modules/mocha/mocha',
+                chai: '/node_modules/chai/chai'
+            },
+            shim: {
+                'mocha': {
+                    init: function() {
+                        this.mocha.setup('bdd');
+                        return this.mocha;
+                    }
+                }
+            }
+        });
+
+        require(['mocha'], function(m) {
+            require(['test/State.test'], function(test) {
+                mocha.setup('bdd')
+                mocha.run();
+            });
+
+        });
+    </script>
+</body>
+
+</html>
