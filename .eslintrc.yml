@@ -11,6 +11,7 @@ rules:
   newline-per-chained-call: 0
   no-undef: 1
   "no-param-reassign": [2, {"props": false}]
+  no-debugger: 0
 globals:
   document: true
   THREE: true
