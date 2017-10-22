@@ -4,6 +4,8 @@ A three.js based 3D robot interface.
 # How To
 Download or clone. Open `index.html`. Enjoy 🤖😀
 
+You may need to use Chrome, since some ES6 features are not supported in other browsers yet.
+
 ![robot-gui](https://user-images.githubusercontent.com/3062564/31865318-7d97605e-b76d-11e7-8ab4-7c2a9e17be3d.png)
 
 # Geometry
