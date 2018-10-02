@@ -2,7 +2,7 @@
 A three.js based 3D robot interface. 
 
 # How To
-Download or clone. Open `index.html`. Enjoy 🤖😀
+Download or clone. Open `index.html` or [robot.glumb.de](http://robot.glumb.de). Enjoy 🤖😀 
 
 You may need to use Chrome, since some ES6 features are not supported in other browsers yet.
 
@@ -28,6 +28,5 @@ Switch between global and TCP aligned controls
 Click add Pose to visualize the working area for the current TCP orientation. Add muliple poses to compare work area vs orientation.
 
 ![bildschirmfoto 2017-10-22 um 21 22 20](https://user-images.githubusercontent.com/3062564/31865429-3429e0c0-b76f-11e7-8ed3-f40d0fca6aaa.png)
-images.githubusercontent.com/3062564/31865430-34432efe-b76f-11e7-8e53-e50800876b87.png)
 ![bildschirmfoto 2017-10-22 um 21 22 51](https://user-images.githubusercontent.com/3062564/31865591-71863d9a-b771-11e7-9d5d-9f010903c221.png)
 
