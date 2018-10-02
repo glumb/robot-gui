@@ -38,6 +38,12 @@ define((require, exports, module) => {
     A5: 0,
   }
 
+  const configuration = {
+    1: false,
+    2: false,
+    3: false,
+  }
+
   const jointLimitsDeg = {
     J0: [-190, 190],
     J1: [-58, 90],
@@ -64,6 +70,13 @@ define((require, exports, module) => {
         }
       }
       robotStore.dispatch('ROBOT_CHANGE_ANGLES', anglesRad)
+    })
+  }
+
+  const configurationGui = gui.addFolder('configuration')
+  for (const key in configuration) {
+    configurationGui.add(configuration, key).listen().onChange(() => {
+      robotStore.dispatch('ROBOT_CHANGE_CONFIGURATION', Object.values(configuration))
     })
   }
 

@@ -1,7 +1,7 @@
 define((require, exports, module) => {
   const Serial = {
     println(text) {
-    // // console.log(text)
+      // // console.log(text)
     },
   }
 
@@ -14,16 +14,16 @@ define((require, exports, module) => {
   const arrows = {}
 
   function addArrow(name, from, to, color, length = 10) {
-  // if (arrows.hasOwnProperty(name)) {
-  //   debug.scene.remove(arrows[name])
-  // }
-  // const toPoint = new THREE.Vector3(to[0], to[1], to[2])
-  // const origin = new THREE.Vector3(from[0], from[1], from[2])
-  // // length = length || toPoint.sub(origin).length()
-  // // toPoint.normalize()
-  // color = color || 0xffff00
-  // arrows[name] = new THREE.ArrowHelper(toPoint.sub(origin).normalize(), origin, length, color, 2, 1)
-  // debug.scene.add(arrows[name])
+    // if (arrows.hasOwnProperty(name)) {
+    //   debug.scene.remove(arrows[name])
+    // }
+    // const toPoint = new THREE.Vector3(to[0], to[1], to[2])
+    // const origin = new THREE.Vector3(from[0], from[1], from[2])
+    // // length = length || toPoint.sub(origin).length()
+    // // toPoint.normalize()
+    // color = color || 0xffff00
+    // arrows[name] = new THREE.ArrowHelper(toPoint.sub(origin).normalize(), origin, length, color, 2, 1)
+    // debug.scene.add(arrows[name])
   }
 
   function addVectorArrow(name, from, vector, color, length) {
@@ -32,18 +32,18 @@ define((require, exports, module) => {
   const spheres = {}
 
   function addSphere(name, position, color, diameter = 1) {
-  // if (spheres.hasOwnProperty(name)) {
-  //   debug.scene.remove(spheres[name])
-  // }
-  // color = color || 0xffff00
-  // const geometry = new THREE.SphereGeometry(diameter, 32, 32)
-  // const material = new THREE.MeshBasicMaterial({
-  //   color,
-  // })
-  //
-  // spheres[name] = new THREE.Mesh(geometry, material)
-  // spheres[name].position.set(position[0], position[1], position[2])
-  // debug.scene.add(spheres[name])
+    if (spheres.hasOwnProperty(name)) {
+      debug.scene.remove(spheres[name])
+    }
+    color = color || 0xffff00
+    const geometry = new THREE.SphereGeometry(diameter, 32, 32)
+    const material = new THREE.MeshBasicMaterial({
+      color,
+    })
+
+    spheres[name] = new THREE.Mesh(geometry, material)
+    spheres[name].position.set(position[0], position[1], position[2])
+    debug.scene.add(spheres[name])
   }
 
   class InverseKinematic {
@@ -81,11 +81,11 @@ define((require, exports, module) => {
       // console.log(`---------------------------------${Math.atan2(geometry[4][2], geometry[4][0])}`)
       this.geometry = geometry
 
-    // debugger;
-    // this.calculateCoordinates(0,0,0,0,0,0,[[],[],[],[],[],[],[],[],[]])
+      // debugger;
+      // this.calculateCoordinates(0,0,0,0,0,0,[[],[],[],[],[],[],[],[],[]])
     }
 
-    calculateAngles(x, y, z, a, b, c, angles) {
+    calculateAngles(x, y, z, a, b, c, angles, config = [false, false, false, false]) {
       const cc = Math.cos(c)
       const sc = Math.sin(c)
       const cb = Math.cos(b)
@@ -144,14 +144,17 @@ define((require, exports, module) => {
       // ---- R0 ----
       // # J4
 
-      R[0] += Math.PI / 2 - Math.acos(-this.J_initial_absolute[4][1] / this.length2(-J[4][1], J[4][0]))
+      const alphaR0 = Math.asin(this.J_initial_absolute[4][1] / this.length2(J[4][1], J[4][0]))
       R[0] += Math.atan2(J[4][1], J[4][0])
+      R[0] += -alphaR0
+
+      if (config[0]) {
+        R[0] += 2 * alphaR0 - Math.PI
+      }
 
       if (-this.J_initial_absolute[4][1] > this.length2(J[4][2], J[4][0])) {
         Serial.println('out of reach')
       }
-
-      //                plane.rotation.y = R[0]
 
       // ---- J1 ----
       // # R0
@@ -180,14 +183,16 @@ define((require, exports, module) => {
       // # J4 R0
 
       const J2J4_length_x_z = this.length2(this.geometry[2][0] + this.geometry[3][0], this.geometry[2][2] + this.geometry[3][2])
-      R[2] -= Math.acos((-J1J4_projected_length_square + Math.pow(J2J4_length_x_z, 2) + Math.pow(this.V1_length_x_z, 2)) / (2.0 * (J2J4_length_x_z) * this.V1_length_x_z))
+      R[2] += ((config[1] ? !config[0] : config[0]) ? 1.0 : -1.0) * Math.acos((-J1J4_projected_length_square + Math.pow(J2J4_length_x_z, 2) + Math.pow(this.V1_length_x_z, 2)) / (2.0 * (J2J4_length_x_z) * this.V1_length_x_z))
+      R[2] -= 2 * Math.PI
 
+      R[2] = ((R[2] + 3 * Math.PI) % (2 * Math.PI)) - Math.PI // todo better clamp -180/180 degree
       // ---- R1 ----
       // # J4 R0
 
       const J1J4_projected_length = Math.sqrt(J1J4_projected_length_square)
-      R[1] -= Math.atan2((J4_x_z[2] - this.J_initial_absolute[1][2]), (J4_x_z[0] - this.J_initial_absolute[1][0]))
-      R[1] -= Math.acos((+J1J4_projected_length_square - Math.pow(J2J4_length_x_z, 2) + Math.pow(this.V1_length_x_z, 2)) / (2.0 * J1J4_projected_length * this.V1_length_x_z))
+      R[1] -= Math.atan2((J4_x_z[2] - this.J_initial_absolute[1][2]), (J4_x_z[0] - this.J_initial_absolute[1][0])) // a''
+      R[1] += ((config[1] ? !config[0] : config[0]) ? 1.0 : -1.0) * Math.acos((J1J4_projected_length_square - Math.pow(J2J4_length_x_z, 2) + Math.pow(this.V1_length_x_z, 2)) / (2.0 * J1J4_projected_length * this.V1_length_x_z)) // a
 
       // ---- J2 ----
       // # R1 R0
@@ -279,8 +284,7 @@ define((require, exports, module) => {
 
       const reference_vector2 = this.cross(J4J5_vector, reference_vector3)
 
-      const targetVectorY = [
-        -cb * sc,
+      const targetVectorY = [-cb * sc,
         ca * cc - sa * sb * sc,
         sa * cc + ca * sb * sc,
       ]
@@ -424,14 +428,14 @@ define((require, exports, module) => {
     }
 
     /**
-   * @param  {array} vectorA         angle from
-   * @param  {array} vectorB         angle to
-   * @param  {array} referenceVector angle to set 0 degree from. coplanar with vecA and vecB
-   * @return {number}                 description
-   * @example angleBetween([1,0,0],[0,1,0],[0,0,1]) // PI/2
-   */
+     * @param  {array} vectorA         angle from
+     * @param  {array} vectorB         angle to
+     * @param  {array} referenceVector angle to set 0 degree from. coplanar with vecA and vecB
+     * @return {number}                 description
+     * @example angleBetween([1,0,0],[0,1,0],[0,0,1]) // PI/2
+     */
     angleBetween(vectorA, vectorB, referenceVector) {
-    // angle = atan2(norm(cross(a, b)), dot(a, b))
+      // angle = atan2(norm(cross(a, b)), dot(a, b))
 
       const norm = this.length3(this.cross(vectorA, vectorB))
 

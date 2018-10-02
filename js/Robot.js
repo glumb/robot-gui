@@ -52,6 +52,7 @@ define((require, exports, module) => {
       J4: [-139 / 180 * Math.PI, 20 / 180 * Math.PI],
       J5: [-188 / 180 * Math.PI, 181 / 180 * Math.PI],
     },
+    configuration: [false, false, false],
     geometry: {
       V0: {
         x: geo[0][0],
@@ -94,7 +95,7 @@ define((require, exports, module) => {
     updateIK(geometry)
   })
 
-  const calculateAngles = (jointLimits, position, rotation) => {
+  const calculateAngles = (jointLimits, position, rotation, configuration) => {
     const angles = []
     IK.calculateAngles(
       position.x,
@@ -104,6 +105,7 @@ define((require, exports, module) => {
       rotation.y,
       rotation.z,
       angles,
+      configuration
     )
 
     outOfBounds = [false, false, false, false, false, false]
@@ -126,7 +128,7 @@ define((require, exports, module) => {
     const {
       angles,
       outOfBounds,
-    } = calculateAngles(state.jointLimits, data.position, data.rotation)
+    } = calculateAngles(state.jointLimits, data.position, data.rotation, state.configuration)
     return Object.assign({}, state, {
       target: {
         position: Object.assign({}, data.position),
@@ -217,7 +219,7 @@ define((require, exports, module) => {
     const {
       angles,
       outOfBounds,
-    } = calculateAngles(state.jointLimits, state.target.position, state.target.rotation)
+    } = calculateAngles(state.jointLimits, state.target.position, state.target.rotation, state.configuration)
     return Object.assign({}, state, {
       angles: {
         A0: angles[0],
@@ -263,13 +265,32 @@ define((require, exports, module) => {
   robotStore.action('ROBOT_CHANGE_JOINT_LIMITS', (state, data) => {
     const {
       outOfBounds,
-    } = calculateAngles(state.jointLimits, state.target.position, state.target.rotation)
+    } = calculateAngles(state.jointLimits, state.target.position, state.target.rotation, state.configuration)
     return { ...state,
       jointOutOfBound: [...outOfBounds],
       jointLimits: { ...state.jointLimits,
         ...data,
       },
     }
+  })
+
+  robotStore.action('ROBOT_CHANGE_CONFIGURATION', (state, data) => {
+    const {
+      angles,
+      outOfBounds,
+    } = calculateAngles(state.jointLimits, state.target.position, state.target.rotation, data)
+    return Object.assign({}, state, {
+      angles: {
+        A0: angles[0],
+        A1: angles[1],
+        A2: angles[2],
+        A3: angles[3],
+        A4: angles[4],
+        A5: angles[5],
+      },
+      configuration: [...data],
+      jointOutOfBound: [...outOfBounds],
+    })
   })
 
   module.exports = robotStore
