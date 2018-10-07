@@ -16,7 +16,7 @@ define((require, exports, module) => {
   // create a scene
   const scene = new THREE.Scene()
 
-  debug.scene = scene
+  window.debug.scene = scene
   // toggle camera mode
   const perspectiveCamera = true
   let camera

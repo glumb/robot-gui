@@ -128,6 +128,8 @@ define((require, exports, module) => {
       hmiGui.add(fun, 'resetTargetAngles').onChange(() => {
 
       })
+      window.debug.show = false
+      hmiGui.add(window.debug, 'show')
 
       /* CONNECT MODULES */
     }

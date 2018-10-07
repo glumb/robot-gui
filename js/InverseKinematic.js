@@ -5,25 +5,19 @@ define((require, exports, module) => {
     },
   }
 
-  function floatToString(float) {
-    return `${float}`
-  }
-
-  const calculatedJointGeometry = []
-
   const arrows = {}
 
-  function addArrow(name, from, to, color, length = 10) {
-    // if (arrows.hasOwnProperty(name)) {
-    //   debug.scene.remove(arrows[name])
-    // }
-    // const toPoint = new THREE.Vector3(to[0], to[1], to[2])
-    // const origin = new THREE.Vector3(from[0], from[1], from[2])
-    // // length = length || toPoint.sub(origin).length()
-    // // toPoint.normalize()
-    // color = color || 0xffff00
-    // arrows[name] = new THREE.ArrowHelper(toPoint.sub(origin).normalize(), origin, length, color, 2, 1)
-    // debug.scene.add(arrows[name])
+  function addArrow(name, from, to, color = 0xffff00, length = 10) {
+    if (arrows.hasOwnProperty(name)) {
+      window.debug.scene.remove(arrows[name])
+    }
+    if (!window.debug.show) return
+    const toPoint = new THREE.Vector3(to[0], to[1], to[2])
+    const origin = new THREE.Vector3(from[0], from[1], from[2])
+    // length = length || toPoint.sub(origin).length()
+    // toPoint.normalize()
+    arrows[name] = new THREE.ArrowHelper(toPoint.sub(origin).normalize(), origin, length, color, 2, 1)
+    window.debug.scene.add(arrows[name])
   }
 
   function addVectorArrow(name, from, vector, color, length) {
@@ -31,11 +25,12 @@ define((require, exports, module) => {
   }
   const spheres = {}
 
-  function addSphere(name, position, color, diameter = 1) {
+  function addSphere(name, position, color = 0xffff00, diameter = 1) {
     if (spheres.hasOwnProperty(name)) {
-      debug.scene.remove(spheres[name])
+      window.debug.scene.remove(spheres[name])
     }
-    color = color || 0xffff00
+    if (!window.debug.show) return
+
     const geometry = new THREE.SphereGeometry(diameter, 32, 32)
     const material = new THREE.MeshBasicMaterial({
       color,
@@ -43,13 +38,11 @@ define((require, exports, module) => {
 
     spheres[name] = new THREE.Mesh(geometry, material)
     spheres[name].position.set(position[0], position[1], position[2])
-    debug.scene.add(spheres[name])
+    window.debug.scene.add(spheres[name])
   }
 
   class InverseKinematic {
     constructor(geometry) {
-      this.robotType = 'AXIS6'
-
       this.OK = 0
       this.OUT_OF_RANGE = 1
       this.OUT_OF_BOUNDS = 2
@@ -76,16 +69,12 @@ define((require, exports, module) => {
       this.R_corrected[2] += Math.atan2((geometry[2][2] + geometry[3][2]), (geometry[2][0] + geometry[3][0])) // correct offset bone V2,V3
       this.R_corrected[2] += Math.atan2(geometry[1][0], geometry[1][2]) // correct bone offset of V1
 
-      this.R_corrected[4] += Math.PI / 2
-      // this.R_corrected[4] -= Math.atan2(geometry[4][2], geometry[4][0])
-      // console.log(`---------------------------------${Math.atan2(geometry[4][2], geometry[4][0])}`)
-      this.geometry = geometry
+      this.R_corrected[4] += Math.PI
 
-      // debugger;
-      // this.calculateCoordinates(0,0,0,0,0,0,[[],[],[],[],[],[],[],[],[]])
+      this.geometry = geometry
     }
 
-    calculateAngles(x, y, z, a, b, c, angles, config = [false, false, false, false]) {
+    calculateAngles(x, y, z, a, b, c, angles, config = [false, false, false]) {
       const cc = Math.cos(c)
       const sc = Math.sin(c)
       const cb = Math.cos(b)
@@ -93,16 +82,10 @@ define((require, exports, module) => {
       const ca = Math.cos(a)
       const sa = Math.sin(a)
 
-
       const targetVectorZ = [
         sb, -sa * cb,
         ca * cb,
       ]
-
-
-      if (this.robotType === 'AXIS4') {
-        targetVectorX = [0, -1, 0]
-      }
 
       const R = [
         this.R_corrected[0],
@@ -122,13 +105,14 @@ define((require, exports, module) => {
         [0, 0, 0],
       ]
 
+
       // ---- J5 ----
 
       J[5][0] = x
       J[5][1] = y
       J[5][2] = z
       addSphere('J5', J[5])
-      // calculatedJointGeometry[5].position.set(J[5][0], J[5][1], J[5][2])
+
 
       // ---- J4 ----
       // vector
@@ -137,9 +121,7 @@ define((require, exports, module) => {
       J[4][1] = y - this.V4_length_x_y_z * targetVectorZ[1]
       J[4][2] = z - this.V4_length_x_y_z * targetVectorZ[2]
       addSphere('J4', J[4])
-      // calculatedJointGeometry[4].position.set(J[4][0], J[4][1], J[4][2])
 
-      // todo backwards rotation
 
       // ---- R0 ----
       // # J4
@@ -156,6 +138,7 @@ define((require, exports, module) => {
         Serial.println('out of reach')
       }
 
+
       // ---- J1 ----
       // # R0
 
@@ -163,7 +146,7 @@ define((require, exports, module) => {
       J[1][1] = Math.sin(R[0]) * this.geometry[0][0] + Math.cos(R[0]) * this.geometry[0][1]
       J[1][2] = this.geometry[0][2]
       addSphere('J1', J[1], 0x00ff00)
-      // calculatedJointGeometry[1].position.set(J[1][0], J[1][1], J[1][2])
+
 
       // ---- rotate J4 into x,z plane ----
       // # J4 R0
@@ -174,10 +157,13 @@ define((require, exports, module) => {
       J4_x_z[1] = Math.sin(R[0]) * J[4][0] + Math.cos(R[0]) * -J[4][1] // 0
       J4_x_z[2] = J[4][2]
       addSphere('J4_x_z', J4_x_z, 0xff0000)
+
+
       // ---- J1J4_projected_length_square ----
       // # J4 R0
 
       const J1J4_projected_length_square = Math.pow(J4_x_z[0] - this.J_initial_absolute[1][0], 2) + Math.pow(J4_x_z[2] - this.J_initial_absolute[1][2], 2) // not using Math.sqrt
+
 
       // ---- R2 ----
       // # J4 R0
@@ -186,13 +172,18 @@ define((require, exports, module) => {
       R[2] += ((config[1] ? !config[0] : config[0]) ? 1.0 : -1.0) * Math.acos((-J1J4_projected_length_square + Math.pow(J2J4_length_x_z, 2) + Math.pow(this.V1_length_x_z, 2)) / (2.0 * (J2J4_length_x_z) * this.V1_length_x_z))
       R[2] -= 2 * Math.PI
 
-      R[2] = ((R[2] + 3 * Math.PI) % (2 * Math.PI)) - Math.PI // todo better clamp -180/180 degree
+      R[2] = ((R[2] + 3 * Math.PI) % (2 * Math.PI)) - Math.PI // clamp -180/180 degree
+
+
       // ---- R1 ----
       // # J4 R0
 
       const J1J4_projected_length = Math.sqrt(J1J4_projected_length_square)
       R[1] -= Math.atan2((J4_x_z[2] - this.J_initial_absolute[1][2]), (J4_x_z[0] - this.J_initial_absolute[1][0])) // a''
       R[1] += ((config[1] ? !config[0] : config[0]) ? 1.0 : -1.0) * Math.acos((J1J4_projected_length_square - Math.pow(J2J4_length_x_z, 2) + Math.pow(this.V1_length_x_z, 2)) / (2.0 * J1J4_projected_length * this.V1_length_x_z)) // a
+
+      R[1] = ((R[1] + 3 * Math.PI) % (2 * Math.PI)) - Math.PI
+
 
       // ---- J2 ----
       // # R1 R0
@@ -222,7 +213,7 @@ define((require, exports, module) => {
       J[3][1] = J[2][1] - (-tb * f * k * m + tb * -g * -l * m + tb * -g * k * n + tb * f * -l * n + ta * o)
       J[3][2] = J[2][2] + -g * k * m + f * -l * m + f * k * n + g * -l * n
       addSphere('J3', J[3], 0x0000ff)
-      // calculatedJointGeometry[3].position.set(J[3][0], J[3][1], J[3][2])
+
 
       // ---- J4J3 J4J5 ----
       // # J3 J4 J5
@@ -230,75 +221,56 @@ define((require, exports, module) => {
       const J4J5_vector = [J[5][0] - J[4][0], J[5][1] - J[4][1], J[5][2] - J[4][2]]
       const J4J3_vector = [J[3][0] - J[4][0], J[3][1] - J[4][1], J[3][2] - J[4][2]]
 
+
       // ---- R3 ----
-      // J3 J4 J5
+      // # J3 J4 J5
 
-      // todo how to always point in one direction traveling from TCP vector
       const J4J5_J4J3_normal_vector = this.cross(J4J5_vector, J4J3_vector)
-      // J4J5_J4J3_normal_vector[0] = Math.abs(J4J5_J4J3_normal_vector[0])
-      // J4J5_J4J3_normal_vector[1] = Math.abs(J4J5_J4J3_normal_vector[1])
-      // J4J5_J4J3_normal_vector[2] = Math.abs(J4J5_J4J3_normal_vector[2])
 
-      // addVectorArrow('normal J4', J[4], J4J5_J4J3_normal_vector)
+      addVectorArrow('normal J4', J[4], J4J5_J4J3_normal_vector, 0xbada55, 8)
 
-      const XY_parallel_aligned_vector = [
-        10 * Math.cos(R[0] + (Math.PI / 2)), -(-10 * Math.sin(R[0] + (Math.PI / 2))),
+      const ZY_parallel_aligned_vector = [
+        10 * -Math.sin(R[0]),
+        10 * Math.cos(R[0]),
         0,
       ]
 
-      // addVectorArrow('normal J4 Y_vector', J[4], XZ_parallel_aligned_vector)
-      // console.log(this.angleBetween(J4J5_J4J3_normal_vector, XY_parallel_aligned_vector, this.cross(XY_parallel_aligned_vector, [0, 0, 1])))
-      // console.log(Math.abs(this.angleBetween(J4J5_J4J3_normal_vector, XY_parallel_aligned_vector, this.cross(XY_parallel_aligned_vector, [0, 0, 1]))) - Math.PI / 2 <= 0.0001)
+      const ZY_aligned_J4J3_normal_vector = this.cross(ZY_parallel_aligned_vector, J4J3_vector)
 
-      // static configuration
-      if (Math.abs(this.angleBetween(J4J5_J4J3_normal_vector, XY_parallel_aligned_vector, this.cross(XY_parallel_aligned_vector, [0, 0, 1]))) - Math.PI / 2 >= 0.0001) {
-        J4J5_J4J3_normal_vector[0] *= -1
-        J4J5_J4J3_normal_vector[1] *= -1
-        J4J5_J4J3_normal_vector[2] *= -1
+      addVectorArrow('normal J4 Y_vectors', J[4], ZY_aligned_J4J3_normal_vector, 0xff00ff)
+      addVectorArrow('XZ_parallel_aligned_vector', J[4], ZY_parallel_aligned_vector, 0x11ff11)
+
+      R[3] = this.angleBetween(J4J5_J4J3_normal_vector, ZY_parallel_aligned_vector, ZY_aligned_J4J3_normal_vector)
+
+      if (config[2]) // rotate 180 and clamp -180,180
+      {
+        R[3] += Math.PI
       }
+      R[3] = ((R[3] + 3 * Math.PI) % (2 * Math.PI)) - Math.PI
 
-      const reference = this.cross(XY_parallel_aligned_vector, J4J3_vector)
-
-      // addVectorArrow('normal J4 Y_vectors', J[4], reference, 0xff0000)
-      addVectorArrow('XZ_parallel_aligned_vector', J[4], XY_parallel_aligned_vector, 0x0000ff)
-
-      R[3] = this.angleBetween(J4J5_J4J3_normal_vector, XY_parallel_aligned_vector, reference)
-
-      // console.log(`------------R3------------- ${R[3]}`)
-      // console.log(`------------sign------------- ${sign}`)
-      // console.log(`------------this.angleBetween------------- ${this.angleBetween(J4J5_J4J3_normal_vector, XZ_parallel_aligned_vector, reference)}`)
 
       // ---- R4 ----
-      // #J4 J3 J5
+      // # J4 J3 J5 R3
 
-      const reference_vector = this.cross(J4J3_vector, J4J5_J4J3_normal_vector)
+      R[4] += ((config[2]) ? 1 : -1) * this.angleBetween2(J4J5_vector, J4J3_vector)
 
-      R[4] -= this.angleBetween(J4J5_vector, J4J3_vector, reference_vector)
-      R[4] = ((3 / 2 * Math.PI + R[4]) % (2 * Math.PI)) - 3 / 2 * Math.PI // clamp angle
-      // console.log(this.angleBetween(J4J5_vector, J4J3_vector, reference_vector))
-      addVectorArrow('2', J[4], J4J5_J4J3_normal_vector, 0x00ff00)
-      // console.log(this.angleBetween2(J4J5_vector, J4J3_vector))
+      // clamp -180,180
+      R[4] = ((R[4] + 3 * Math.PI) % (2 * Math.PI)) - Math.PI
+
+
       // ---- R5 ----
-
-      const reference_vector3 = this.cross(J4J5_vector, [0, 0, 10])
-
-      const reference_vector2 = this.cross(J4J5_vector, reference_vector3)
+      // # J4 J5 J3
 
       const targetVectorY = [-cb * sc,
         ca * cc - sa * sb * sc,
         sa * cc + ca * sb * sc,
       ]
 
-      // R[5] += -a
-      // R[5] += Math.PI
       R[5] -= this.angleBetween(J4J5_J4J3_normal_vector, targetVectorY, this.cross(targetVectorZ, targetVectorY))
-      // addVectorArrow('J4J5_J4J3_normal_vector', J[4], J4J5_J4J3_normal_vector, 0xff0000)
-      if (R[5] > Math.PI) {
-        R[5] = -Math.PI + (R[5] % Math.PI)
-      }
 
-      const PI = Math.PI
+      if (config[2]) R[5] += Math.PI
 
+      R[5] = ((R[5] + 3 * Math.PI) % (2 * Math.PI)) - Math.PI
       // ---- Error handling ----
 
       const error = false
@@ -331,7 +303,9 @@ define((require, exports, module) => {
       jointsResult[5] = joints[5][5]
     }
 
-    calculateCoordinates(R0, R1, R2, R3, R4, R5, jointsResult) {
+    calculateCoordinates(R0, R1, R2, R3, R4, R5, jointsResult, config = [false, false, false]) {
+      // todo detect config
+
       const a = Math.cos(R0)
       const b = Math.sin(R0)
       const c = this.geometry[0][0]
@@ -385,9 +359,9 @@ define((require, exports, module) => {
       jointsResult[5][2] = jointsResult[4][2] - g * k * u * w - f * l * u * w - f * k * p * v * w + g * l * p * v * w + f * k * q * x - g * l * q * x + f * k * p * u * y - g * l * p * u * y - g * k * v * y - f * l * v * y
 
       const M = [
-        [-B * b * p - -B * a * g * k * q - -B * a * f * l * q - A * a * f * k * u + A * a * g * l * u + A * a * g * k * p * v + A * a * f * l * p * v + A * b * q * v, -A * b * p + A * a * g * k * q + A * a * f * l * q - -B * a * f * k * u + -B * a * g * l * u + -B * a * g * k * p * v + -B * a * f * l * p * v + -B * b * q * v, -a * g * k * p * u - a * f * l * p * u - b * q * u - a * f * k * v + a * g * l * v, 0],
-        [+B * a * p - -B * b * g * k * q - -B * b * f * l * q - A * b * f * k * u + A * b * g * l * u + A * b * g * k * p * v + A * b * f * l * p * v - A * a * q * v, A * a * p + A * b * g * k * q + A * b * f * l * q - -B * b * f * k * u + -B * b * g * l * u + -B * b * g * k * p * v + -B * b * f * l * p * v - -B * a * q * v, -b * g * k * p * u - b * f * l * p * u + a * q * u - b * f * k * v + b * g * l * v, 0],
-        [+B * f * k * q + -B * g * l * q + A * g * k * u + A * f * l * u + A * f * k * p * v - A * g * l * p * v, A * f * k * q - A * g * l * q + -B * g * k * u + -B * f * l * u + -B * f * k * p * v - -B * g * l * p * v, -f * k * p * u + g * l * p * u + g * k * v + f * l * v, 0],
+        [-B * b * p + B * a * g * k * q + B * a * f * l * q - A * a * g * k * p * u - A * a * f * l * p * u - A * b * q * u - A * a * f * k * v + A * a * g * l * v, -A * b * p + A * a * g * k * q + A * a * f * l * q + B * a * g * k * p * u + B * a * f * l * p * u + B * b * q * u + B * a * f * k * v - B * a * g * l * v, a * f * k * u - a * g * l * u - a * g * k * p * v - a * f * l * p * v - b * q * v],
+        [B * a * p + B * b * g * k * q + B * b * f * l * q - A * b * g * k * p * u - A * b * f * l * p * u + A * a * q * u - A * b * f * k * v + A * b * g * l * v, A * a * p + A * b * g * k * q + A * b * f * l * q + B * b * g * k * p * u + B * b * f * l * p * u - B * a * q * u + B * b * f * k * v - B * b * g * l * v, b * f * k * u - b * g * l * u - b * g * k * p * v - b * f * l * p * v + a * q * v],
+        [B * f * k * q - B * g * l * q - A * f * k * p * u + A * g * l * p * u + A * g * k * v + A * f * l * v, A * f * k * q - A * g * l * q + B * f * k * p * u - B * g * l * p * u - B * g * k * v - B * f * l * v, -g * k * u - f * l * u - f * k * p * v + g * l * p * v],
       ]
 
       // https://www.geometrictools.com/Documentation/EulerAngles.pdf

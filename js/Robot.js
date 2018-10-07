@@ -11,7 +11,7 @@ define((require, exports, module) => {
     [0, 0, 13.0],
     [1, 0, 2],
     [12.6, 0, 0],
-    [0, 0, -3.6],
+    [3.6, 0, 0],
     [0, 0, 0],
   ]
   const defaultRobotState = {
@@ -46,10 +46,10 @@ define((require, exports, module) => {
     },
     jointLimits: {
       J0: [-190 / 180 * Math.PI, 190 / 180 * Math.PI],
-      J1: [-58 / 180 * Math.PI, 90 / 180 * Math.PI],
-      J2: [-135 / 180 * Math.PI, 40 / 180 * Math.PI],
+      J1: [-90 / 180 * Math.PI, 90 / 180 * Math.PI],
+      J2: [-135 / 180 * Math.PI, 45 / 180 * Math.PI],
       J3: [-90 / 180 * Math.PI, 75 / 180 * Math.PI],
-      J4: [-139 / 180 * Math.PI, 20 / 180 * Math.PI],
+      J4: [-139 / 180 * Math.PI, 90 / 180 * Math.PI],
       J5: [-188 / 180 * Math.PI, 181 / 180 * Math.PI],
     },
     configuration: [false, false, false],

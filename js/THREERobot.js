@@ -72,22 +72,22 @@ const THREERobot = function (V_initial, limits, scene) {
         joint.rotation.x = Math.PI / 2
         break
       case 1:
-      // joint.rotation.x = Math.PI / 2
+        // joint.rotation.x = Math.PI / 2
         break
       case 2:
-      // joint.rotation.x = Math.PI / 2
-        break
-      case 4:
-      // joint.rotation.x = Math.PI / 2
-      // joint.rotation.y = -Math.PI / 2
+        // joint.rotation.x = Math.PI / 2
         break
       case 3:
         joint.rotation.z = Math.PI / 2
         // joint.rotation.y = Math.PI
         break
+      case 4:
+        // joint.rotation.x = Math.PI / 2
+        joint.rotation.y = Math.PI / 2
+        break
       case 5:
         joint.rotation.x = Math.PI / 2
-        group.rotation.y = Math.PI
+        group.rotation.y = Math.PI / 2
         // group.rotation.z = Math.PI
         // group.rotation.z = -Math.PI / 2
         // group.rotation.y += Math.PI

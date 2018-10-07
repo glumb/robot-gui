@@ -32,7 +32,7 @@ define((require, exports, module) => {
   })
 
   function buildRobot(state) {
-    if (state.geometry.V3.y !== 0 || state.geometry.V3.z !== 0 || state.geometry.V4.y !== 0 || state.geometry.V4.x !== 0) {
+    if (state.geometry.V3.y !== 0 || state.geometry.V3.z !== 0 || state.geometry.V4.y !== 0 || state.geometry.V4.z !== 0) {
       alert('geometry where V3 y,z not 0 and V4 x,z not 0 are not supported, yet')
       state.geometry.V3.y =
          state.geometry.V3.z =
