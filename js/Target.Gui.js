@@ -44,23 +44,13 @@ define((require, exports, module) => {
     helper.manipulate = state.manipulate
     helper.controlMode = state.controlMode
 
-    if (state.followTarget) {
-      helper.position.x = targetT.position.x
-      helper.position.y = targetT.position.y
-      helper.position.z = targetT.position.z
+    helper.position.x = state.position.x
+    helper.position.y = state.position.y
+    helper.position.z = state.position.z
 
-      helper.rotation.x = targetT.rotation.x
-      helper.rotation.y = targetT.rotation.y
-      helper.rotation.z = targetT.rotation.z
-    } else {
-      helper.position.x = state.position.x
-      helper.position.y = state.position.y
-      helper.position.z = state.position.z
-
-      helper.rotation.x = state.rotation.x
-      helper.rotation.y = state.rotation.y
-      helper.rotation.z = state.rotation.z
-    }
+    helper.rotation.x = state.rotation.x
+    helper.rotation.y = state.rotation.y
+    helper.rotation.z = state.rotation.z
 
     // Iterate over all controllers
     for (const i in targetGUI.__controllers) {

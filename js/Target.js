@@ -155,22 +155,23 @@ define((require, exports, module) => {
   let disableUpdate = false
   store.listen([() => store.getStore('Robot').getState().target, state => state], (targetT, state) => {
     if (state.followTarget) {
-      target.position.x = targetT.position.x
-      target.position.y = targetT.position.y
-      target.position.z = targetT.position.z
+      state.position.x = targetT.position.x
+      state.position.y = targetT.position.y
+      state.position.z = targetT.position.z
 
-      target.rotation.x = targetT.rotation.x
-      target.rotation.y = targetT.rotation.y
-      target.rotation.z = targetT.rotation.z
-    } else {
-      target.position.x = state.position.x
-      target.position.y = state.position.y
-      target.position.z = state.position.z
-
-      target.rotation.x = state.rotation.x
-      target.rotation.y = state.rotation.y
-      target.rotation.z = state.rotation.z
+      state.rotation.x = targetT.rotation.x
+      state.rotation.y = targetT.rotation.y
+      state.rotation.z = targetT.rotation.z
     }
+
+    target.position.x = state.position.x
+    target.position.y = state.position.y
+    target.position.z = state.position.z
+
+    target.rotation.x = state.rotation.x
+    target.rotation.y = state.rotation.y
+    target.rotation.z = state.rotation.z
+
 
     if (true) { // loop -  changing mode triggers change....
       disableUpdate = true
