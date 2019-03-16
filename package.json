@@ -1,13 +1,14 @@
 {
-  "name": "Javascript Robot HMI",
-  "version": "1.0.0",
-  "description": "",
+  "name": "javascript-robot-hmi",
+  "version": "1.0.1",
+  "description": "Javascript Robot HMI",
   "main": "index.js",
   "scripts": {
+    "start": "lite-server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "glumb",
+  "license": "MIT",
   "dependencies": {
     "colors": "^1.1.2",
     "commander": "^2.9.0",
@@ -22,6 +23,7 @@
     "eslint-plugin-import": "^2.0.1",
     "eslint-plugin-jsx-a11y": "^2.2.3",
     "eslint-plugin-react": "^6.4.1",
+    "lite-server": "^2.4.0",
     "mocha": "3.2.0"
   }
 }
