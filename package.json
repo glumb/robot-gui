@@ -1,29 +1,8 @@
 {
-  "name": "javascript-robot-hmi",
-  "version": "1.0.1",
-  "description": "Javascript Robot HMI",
-  "main": "index.js",
-  "scripts": {
-    "start": "lite-server",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "glumb",
-  "license": "MIT",
   "dependencies": {
-    "colors": "^1.1.2",
-    "commander": "^2.9.0",
-    "debug": "^2.2.0",
-    "redux": "^3.6.0",
-    "serialport": "^4.0.1",
-    "socketio": "^1.0.0"
+    "three": "^0.153.0"
   },
   "devDependencies": {
-    "eslint": "^3.8.0",
-    "eslint-config-airbnb": "^12.0.0",
-    "eslint-plugin-import": "^2.0.1",
-    "eslint-plugin-jsx-a11y": "^2.2.3",
-    "eslint-plugin-react": "^6.4.1",
-    "lite-server": "^2.4.0",
-    "mocha": "3.2.0"
+    "vite": "^4.3.9"
   }
 }

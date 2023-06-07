@@ -1,49 +1,27 @@
-<!doctype html>
-<html>
-
-<head>
-  <title>Robot Gui by Maximilian Beck</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-
-  <script src="js/require.js" charset="utf-8"></script>
-  <!-- <script src="/socket.io/socket.io.js"></script> -->
-
-  <script src="vendor/three.js/Three.js"></script>
-  <script src="vendor/three.js/Detector.js"></script>
-  <script src="vendor/three.js/Stats.js"></script>
-
-  <script src="vendor/threex/THREEx.screenshot.js"></script>
-  <script src="vendor/threex/THREEx.FullScreen.js"></script>
-  <script src="vendor/threex/THREEx.WindowResize.js"></script>
-  <script src="vendor/three.js/OrbitControls.js"></script>
-  <script src="vendor/three.js/TransformControls.js"></script>
-  <script src="vendor/EventDispatcher.js"></script>
-  <script src="js/THREERobot.js"></script>
-
-  <link href="css/main.css" rel="stylesheet" />
-</head>
-
-<body>
-  <!-- three.js container -->
-  <div id="container"></div>
-
-  <script type="text/javascript">
-
-    var debug = {}
-    requirejs.config({
-      // urlArgs: "bust=" + (new Date()).getTime(),
-      baseUrl: 'js',
-      paths: {
-        State: '../vendor/state/State',
-        Kinematic: 'InverseKinematic'
-      },
-    });
-
-    require(['Hmi'], function(Hmi) {
-      let hmi = new Hmi()
-    });
-  </script>
-</body>
-
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			#info {
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+				color:white;
+			}
+		</style>
+	</head>
+	<div id="info">Description</div>
+	<body>
+		<script type="module" src="/js/scene.js"></script>
+		<script type="module" src="/js/RobotTHREE.js"></script>
+		<script type="module" src="/js/Target.js"></script>
+		<script type="module" src="/js/Robot.Gui.js"></script>
+		<!-- <script type="module" src="/main.js"></script> -->
+	</body>
 </html>
