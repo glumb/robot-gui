@@ -41,10 +41,12 @@ if (perspectiveCamera) {
 
 // scene.rotation.x = -(Math.PI)/2;
 camera.up.set(0, 0, 1)
-camera.position.set(25, 25, 25)
+camera.position.set(10, 10, 10)
 
 
 scene.add(camera)
+
+renderer.render( scene, camera );
 
 // lights
 const light = new THREE.AmbientLight(0xaaaaaa)
@@ -58,7 +60,7 @@ light2.position.set(1, 1.3, 1).normalize()
 scene.add(light3)
 
 const orbitControls = new OrbitControls(camera, renderer.domElement)
-orbitControls.addEventListener('change', () => renderer.render(scene, camera))
+// orbitControls.addEventListener('change', () => renderer.render(scene, camera))
 
 const flyControls = new FlyControls( camera, renderer.domElement );
 
@@ -93,12 +95,10 @@ const step = 20
 
 const gridHelper = new THREE.GridHelper(size, step)
 gridHelper.rotation.x = Math.PI / 2
-scene.add(gridHelper)
+// scene.add(gridHelper)
 
 const axesHelper = new THREE.AxesHelper(5)
 // scene.add(axesHelper)
-
-renderer.render( scene, camera );
 
 // const loader = new GLTFLoader();
 // loader.load( 'ISS_stationary.glb', function ( gltf ) {
@@ -116,46 +116,37 @@ renderer.render( scene, camera );
 
 // } );
 
-// const loader = new THREE.ObjectLoader();
-// loader.load(
-// 	// resource URL
-// 	"/ISS.json",
+const loader = new THREE.ObjectLoader();
+loader.load(
+	// resource URL
+	"/ISS.json",
 
-// 	// onLoad callback
-// 	// Here the loaded data is assumed to be an object
-// 	function ( obj ) {
-// 		// Add the loaded object to the scene
-// 		scene.add( obj );
-//         obj.position.set(-17.5, -13.375, -1.5)
-//         obj.rotation.set((Math.PI)/2, (Math.PI)/2, 0)
-// 	},
+	// onLoad callback
+	// Here the loaded data is assumed to be an object
+	function ( obj ) {
+		// Add the loaded object to the scene
+		scene.add( obj );
+        obj.position.set(-17.5, -13.375, -1.5)
+        obj.rotation.set((Math.PI)/2, (Math.PI)/2, 0)
+	},
 
-// 	// onProgress callback
-// 	function ( xhr ) {
-// 		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-// 	},
+	// onProgress callback
+	function ( xhr ) {
+		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+	},
 
-// 	// onError callback
-// 	function ( err ) {
-// 		console.error( 'An error happened' );
-// 	}
-// );
+	// onError callback
+	function ( err ) {
+		console.error( 'An error happened' );
+	}
+);
 
-// const loader1 = new RGBELoader();
-// loader1.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
-//     texture.mapping = THREE.EquirectangularRefractionMapping
-//     scene.background = texture;
-//     scene.environment = texture;
-// })
-
-// const geometry = new THREE.SphereGeometry( 100, 100, 100 ); 
-// const material = new THREE.MeshBasicMaterial( {
-//     map: new THREE.TextureLoader().load(
-//         '/8k_earth_daymap.jpg'
-//     )
-// } );
-// const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
-// sphere.position.set(-17.5, -13.375, -1050)
+const loader1 = new RGBELoader();
+loader1.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
+    texture.mapping = THREE.EquirectangularRefractionMapping
+    scene.background = texture;
+    scene.environment = texture;
+})
 
 /* END THREEJS SCENE SETUP */
 
@@ -166,13 +157,15 @@ THREEStore.listen(() => {
     }, 0)
 })
 
-// animate()
-// function animate() {
-//     renderer.render( scene, camera );
-//     // 3. update controls with a small step value to "power its engines"
-//     flyControls.update(0.01)
-//     requestAnimationFrame( animate );
-// };
+
+animate()
+function animate() {
+    renderer.render( scene, camera );
+    // 3. update controls with a small step value to "power its engines"
+    // flyControls.update(0.01)
+    orbitControls.update(0.01)
+    requestAnimationFrame( animate );
+};
 
 export { scene }
 export { renderer }

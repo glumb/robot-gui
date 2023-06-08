@@ -45,7 +45,7 @@ export default class THREERobot {
       mesh.position.set(w / 2, h / 2, d / 2)
       const group = new THREE.Object3D()
       group.position.set(x, y, z)
-      if(jointNumber > 2) group.add(mesh)
+      if(jointNumber > 4) group.add(mesh)
             
       var xpos = w/2
       var ypos = h/2
@@ -68,18 +68,17 @@ export default class THREERobot {
           xrot = (Math.PI) /2 
           break
         case 3:
-          xpos += 4
+          xpos += 0.8
+          yrot = (Math.PI)
           break
         case 4:
-          xpos -= 0.25
-          ypos += 0.5
+          xpos -= 0.9
           // group.position.y += 0.5
           break
         case 5:
           group.rotation.y = Math.PI / 2
-          group.position.y += 0.5
-          group.position.z += 0.5
-          xrot = 0
+          zrot = (Math.PI) / 2
+          zpos -= 1.3
           break
       }
 
@@ -92,7 +91,7 @@ export default class THREERobot {
         // Here the loaded data is assumed to be an object
         function ( obj ) {
           // Add the loaded object to the scene
-          if(jointNumber < 4 && jointNumber != 3)  group.add( obj );
+          group.add( obj );
           obj.position.set(xpos, ypos, zpos)
           obj.rotation.set(xrot, yrot, zrot)
         },
