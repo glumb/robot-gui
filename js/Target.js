@@ -295,6 +295,7 @@ const rotStep = 5 / 180 * Math.PI;
 
 window.addEventListener("keydown", (e) => {
   updateRobPose();
+  // setRobotTarget(robPosition, robRotation)
   if(e.key in keys) {
     keys[e.key] = true
   }

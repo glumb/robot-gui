@@ -100,26 +100,53 @@ const axesHelper = new THREE.AxesHelper(5)
 
 renderer.render( scene, camera );
 
-const loader = new GLTFLoader();
+// const loader = new GLTFLoader();
+// loader.load( 'ISS_stationary.glb', function ( gltf ) {
+// 	const model = gltf.scene
+// 	scene.add( model );
+// 	// model.scale.set(0.5, 0.5, 0.5)
+//     model.position.set(-17.5, -13.375, -1.5)
+//     model.rotation.set((Math.PI)/2, (Math.PI)/2, 0)
+//     console.log(model)
+    
 
-loader.load( 'ISS_stationary.glb', function ( gltf ) {
-	const model = gltf.scene
-	scene.add( model );
-	// model.scale.set(0.5, 0.5, 0.5)
-    model.position.set(-17.5, -13.375, -1.5)
-    model.rotation.set((Math.PI)/2, (Math.PI)/2, 0)
+// }, undefined, function ( error ) {
 
-}, undefined, function ( error ) {
+// 	console.error( error );
 
-	console.error( error );
+// } );
 
-} );
+// const loader = new THREE.ObjectLoader();
+// loader.load(
+// 	// resource URL
+// 	"/ISS.json",
 
-const loader1 = new RGBELoader();
-loader1.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
-    texture.mapping = THREE.EquirectangularRefractionMapping
-    scene.background = texture;
-})
+// 	// onLoad callback
+// 	// Here the loaded data is assumed to be an object
+// 	function ( obj ) {
+// 		// Add the loaded object to the scene
+// 		scene.add( obj );
+//         obj.position.set(-17.5, -13.375, -1.5)
+//         obj.rotation.set((Math.PI)/2, (Math.PI)/2, 0)
+// 	},
+
+// 	// onProgress callback
+// 	function ( xhr ) {
+// 		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+// 	},
+
+// 	// onError callback
+// 	function ( err ) {
+// 		console.error( 'An error happened' );
+// 	}
+// );
+
+// const loader1 = new RGBELoader();
+// loader1.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
+//     texture.mapping = THREE.EquirectangularRefractionMapping
+//     scene.background = texture;
+//     scene.environment = texture;
+// })
 
 // const geometry = new THREE.SphereGeometry( 100, 100, 100 ); 
 // const material = new THREE.MeshBasicMaterial( {
@@ -150,6 +177,7 @@ THREEStore.listen(() => {
 export { scene }
 export { renderer }
 export { camera }
+// export { model }
 
 // module.exports.scene = scene
 // module.exports.renderer = renderer
