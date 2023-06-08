@@ -100,21 +100,44 @@ gridHelper.rotation.x = Math.PI / 2
 const axesHelper = new THREE.AxesHelper(5)
 // scene.add(axesHelper)
 
-// const loader = new GLTFLoader();
-// loader.load( 'ISS_stationary.glb', function ( gltf ) {
-// 	const model = gltf.scene
+// const loader2 = new GLTFLoader();
+// loader2.load( 'guy.glb', function ( gltf ) {
+//     const model = gltf.scene
+//     model.name = "guy"
 // 	scene.add( model );
 // 	// model.scale.set(0.5, 0.5, 0.5)
-//     model.position.set(-17.5, -13.375, -1.5)
-//     model.rotation.set((Math.PI)/2, (Math.PI)/2, 0)
-//     console.log(model)
-    
-
+//     model.position.set(3, 4, 1)
 // }, undefined, function ( error ) {
 
 // 	console.error( error );
 
 // } );
+
+const loader2 = new THREE.ObjectLoader();
+loader2.load(
+	// resource URL
+	"/man.json",
+
+	// onLoad callback
+	// Here the loaded data is assumed to be an object
+	function ( obj ) {
+		// Add the loaded object to the scene
+		scene.add( obj );
+        obj.name = "guy"
+	    // model.scale.set(0.5, 0.5, 0.5)
+        obj.position.set(3, 4, 1)
+	},
+
+	// onProgress callback
+	function ( xhr ) {
+		// console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+	},
+
+	// onError callback
+	function ( err ) {
+		console.error( 'An error happened' );
+	}
+);
 
 const loader = new THREE.ObjectLoader();
 loader.load(
@@ -132,7 +155,7 @@ loader.load(
 
 	// onProgress callback
 	function ( xhr ) {
-		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+		// console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
 	},
 
 	// onError callback
@@ -164,6 +187,17 @@ function animate() {
     // 3. update controls with a small step value to "power its engines"
     // flyControls.update(0.01)
     orbitControls.update(0.01)
+    try {
+        const guy =  scene.getObjectByName("guy")     
+        guy.position.x += 0.005
+        guy.position.z -= 0.003
+        guy.position.y +- 0.001
+        guy.rotation.x += 0.01
+        guy.rotation.y += 0.02
+        scene
+    } catch(err) {
+        console.log(err)
+    }
     requestAnimationFrame( animate );
 };
 
