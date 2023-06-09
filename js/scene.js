@@ -3,7 +3,6 @@ import WebGL from 'three/addons/capabilities/WebGL.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { storeManager } from './State';
 
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls'
 
@@ -46,7 +45,7 @@ camera.position.set(10, 10, 10)
 
 scene.add(camera)
 
-renderer.render( scene, camera );
+// renderer.render( scene, camera );
 
 // lights
 const light = new THREE.AmbientLight(0xaaaaaa)
@@ -100,47 +99,85 @@ gridHelper.rotation.x = Math.PI / 2
 const axesHelper = new THREE.AxesHelper(5)
 // scene.add(axesHelper)
 
-// const loader2 = new GLTFLoader();
-// loader2.load( 'guy.glb', function ( gltf ) {
-//     const model = gltf.scene
-//     model.name = "guy"
-// 	scene.add( model );
-// 	// model.scale.set(0.5, 0.5, 0.5)
-//     model.position.set(3, 4, 1)
-// }, undefined, function ( error ) {
 
-// 	console.error( error );
+const manager = new THREE.LoadingManager();
+const objectLoader = new THREE.ObjectLoader( manager );
+const rgbeLoader = new RGBELoader( manager );
 
-// } );
+manager.onStart = function ( url, itemsLoaded, itemsTotal ) {
+	console.log( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+};
 
-const loader2 = new THREE.ObjectLoader();
-loader2.load(
-	// resource URL
-	"/man.json",
+const progressBar = document.getElementById('progress-bar');
+const progressLabel = document.getElementById('progress-bar-label');
+manager.onProgress = function ( url, itemsLoaded, itemsTotal) {
+	progressBar.value = (itemsLoaded / itemsTotal) * 100
+    progressLabel.innerHTML = 'Loaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.'
+};
 
-	// onLoad callback
-	// Here the loaded data is assumed to be an object
-	function ( obj ) {
-		// Add the loaded object to the scene
-		scene.add( obj );
-        obj.name = "guy"
-	    // model.scale.set(0.5, 0.5, 0.5)
-        obj.position.set(3, 4, 1)
-	},
+const progressBarContainer = document.querySelector('.progress-bar-container')
+manager.onLoad = function ( ) {
+	progressBarContainer.style.display = 'none'
+    animate()
+};
 
-	// onProgress callback
-	function ( xhr ) {
-		// console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-	},
+// manager.onError = function ( url ) {
+// 	console.log( 'There was an error loading ' + url );
+// };
 
-	// onError callback
-	function ( err ) {
-		console.error( 'An error happened' );
-	}
-);
+for(let i = 0; i < 9; i++) {
+    objectLoader.load(
+        // resource URL
+        "/man.json",
 
-const loader = new THREE.ObjectLoader();
-loader.load(
+        // onLoad callback
+        // Here the loaded data is assumed to be an object
+        function ( obj ) {
+            // Add the loaded object to the scene
+            scene.add( obj );
+            obj.name = "guy" + i
+            // model.scale.set(0.5, 0.5, 0.5)
+            // let bounds = {
+            //     x: [-3, 3],
+            //     y: [0, 6],
+            //     z: [-2.5, 3]
+            //   }
+      
+            // obj.position.x = Math.random() * (bounds.x[1]-bounds.x[0]) + bounds.x[0]
+            // obj.position.y = Math.random() * (bounds.y[1]-bounds.y[0]) + bounds.y[0]
+            // obj.position.z = Math.random() * (bounds.z[1]-bounds.z[0]) + bounds.z[0]
+            obj.position.set(0, 3, 2)
+        },
+
+        // onProgress callback
+        function ( xhr ) {
+            // console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+        },
+
+        // onError callback
+        function ( err ) {
+            console.error( 'An error happened' );
+        }
+    );
+}
+
+var astronaut = {};
+for (let i = 0; i < 9; i++) {
+    var name = "guy" + i
+    astronaut[name] = {
+        "x_vel": (Math.random() < 0.5 ? -1 : 1) * 0.001,
+        "y_vel": (Math.random() < 0.5 ? -1 : 1) * 0.001,
+        "z_vel": (Math.random() < 0.5 ? -1 : 1) * 0.001,
+        "x_rot": (Math.random() < 0.5 ? -1 : 1) * 0.005,
+        "y_rot": (Math.random() < 0.5 ? -1 : 1) * 0.005
+
+    }
+    // for (let j = 0; j < 5; j++) {
+    //     astronaut[name] = 
+    // }
+}
+
+objectLoader.load(
 	// resource URL
 	"/ISS.json",
 
@@ -164,8 +201,7 @@ loader.load(
 	}
 );
 
-const loader1 = new RGBELoader();
-loader1.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
+rgbeLoader.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
     texture.mapping = THREE.EquirectangularRefractionMapping
     scene.background = texture;
     scene.environment = texture;
@@ -173,37 +209,41 @@ loader1.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
 
 /* END THREEJS SCENE SETUP */
 
-THREEStore.listen(() => {
-// kickass trick to render after other listeners. Stack and stuff
-    setTimeout(() => {
-        renderer.render(scene, camera)
-    }, 0)
-})
+// THREEStore.listen(() => {
+// // kickass trick to render after other listeners. Stack and stuff
+//     setTimeout(() => {
+//         renderer.render(scene, camera)
+//     }, 0)
+// })
 
-
-animate()
+// animate()
 function animate() {
     renderer.render( scene, camera );
     // 3. update controls with a small step value to "power its engines"
     // flyControls.update(0.01)
     orbitControls.update(0.01)
     try {
-        const guy =  scene.getObjectByName("guy")     
-        guy.position.x += 0.005
-        guy.position.z -= 0.003
-        guy.position.y +- 0.001
-        guy.rotation.x += 0.01
-        guy.rotation.y += 0.02
-        scene
-    } catch(err) {
-        console.log(err)
+        for(let i = 0; i < 9; i++) {
+            let name = "guy" + i
+            const guy =  scene.getObjectByName(name)     
+            guy.position.x += astronaut[name].x_vel
+            guy.position.z += astronaut[name].z_vel
+            guy.position.y += astronaut[name].y_vel 
+            guy.rotation.x += astronaut[name].x_rot
+            guy.rotation.y += astronaut[name].y_rot
+        }
+    } catch (err) {
+        //do  nothing idc
     }
+    
+
     requestAnimationFrame( animate );
 };
 
 export { scene }
 export { renderer }
 export { camera }
+export { objectLoader}
 // export { model }
 
 // module.exports.scene = scene

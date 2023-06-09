@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-// import { model as ISS } from './scene'
+import { objectLoader } from './scene'
 
 export default class THREERobot {
   constructor(V_initial, limits, scene) {
@@ -82,8 +82,7 @@ export default class THREERobot {
           break
       }
 
-      const loader = new THREE.ObjectLoader();
-      loader.load(
+      objectLoader.load(
         // resource URL
         path,
 

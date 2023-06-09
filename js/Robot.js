@@ -1,6 +1,5 @@
 import { storeManager } from './State'
 import { InverseKinematic as Kinematic } from './InverseKinematic'
-import { ObjectLoader } from 'three'
 
 // localState = {
 //   jointOutOfBound: [false, false, false, false, false, false],
