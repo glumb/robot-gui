@@ -24,9 +24,9 @@ const defaultState = {
   followTarget: false,
   manipulate: 'rotate',
   position: {
-    x: 10,
-    y: 10,
-    z: 10,
+    x: 0,
+    y: 3,
+    z: 1,
   },
   rotation: {
     x: 0,
@@ -56,7 +56,7 @@ store.action('SET_CONTROL_VISIBLE', (state, data) => Object.assign({}, state, {
   controlVisible: data,
 }))
 
-const sphereGeo = new THREE.CylinderGeometry(1, 1, 1 * 2, 32)
+const sphereGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.2 * 2, 16)
 const target = new THREE.Group()
 
 const targetCylinder = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({
@@ -234,11 +234,11 @@ window.addEventListener('keydown', (event) => {
 var robPosition = store.getStore('Robot').getState().target.position
 var robRotation = store.getStore('Robot').getState().target.rotation
 
-const bound = 7;
+const targetBound = 0.8
 function checkWin() {
-  if((robPosition.x < target.position.x + 1.5) && (robPosition.x > target.position.x - 1.5)) {
-    if(robPosition.y < target.position.y + 1.5 && robPosition.y > target.position.y - 1.5) {
-      if(robPosition.z < target.position.z + 1.5 && robPosition.z > target.position.z - 1.5) {
+  if((robPosition.x < target.position.x + targetBound) && (robPosition.x > target.position.x - targetBound)) {
+    if(robPosition.y < target.position.y + targetBound && robPosition.y > target.position.y - targetBound) {
+      if(robPosition.z < target.position.z + targetBound && robPosition.z > target.position.z - targetBound) {
 
         // if((state.rotation.x < targetT.rotation.x + 1) && (state.rotation.x > targetT.rotation.x - 1)) { //1 radian of error allowed lols
         //   if(state.rotation.y < targetT.rotation.y + 1 && state.rotation.y > targetT.rotation.y - 1) {
@@ -248,19 +248,19 @@ function checkWin() {
         target.rotation.y = Math.random() * (2 * Math.PI)
         target.rotation.z = Math.random() * (2 * Math.PI)
 
-        target.position.x = Math.random() * 24 - 12
-        target.position.y = Math.random() * 24 - 12
-        target.position.z = Math.random() * 10 + 2
-
-        while((target.position.y > -bound && target.position.y < bound) ||
-              (target.position.x > -bound && target.position.x < bound)) {
-
-              target.position.x = Math.random() * 10 - 20
-              target.position.y = Math.random() * 10 - 20
-              target.position.z = Math.random() * 10 -20
+        let bounds = {
+          x: [-3, 3],
+          y: [0, 6],
+          z: [-2.5, 3]
         }
+
+        target.position.x = Math.random() * (bounds.x[1]-bounds.x[0]) + bounds.x[0]
+        target.position.y = Math.random() * (bounds.y[1]-bounds.y[0]) + bounds.y[0]
+        target.position.z = Math.random() * (bounds.z[1]-bounds.z[0]) + bounds.z[0]
+
+        console.log(target.position)
           
-              targetChangedAction()
+        targetChangedAction()
         //     }
         //   }
         // }
@@ -295,6 +295,7 @@ const rotStep = 5 / 180 * Math.PI;
 
 window.addEventListener("keydown", (e) => {
   updateRobPose();
+  // setRobotTarget(robPosition, robRotation)
   if(e.key in keys) {
     keys[e.key] = true
   }
@@ -373,7 +374,7 @@ store.action('TARGET_CHANGE_TARGET', (state, data) => {
 })
 
 function setTarget(position, rotation) {
-  store.dispatch('TARGET_CHANGE_TARGET', {
+  store.getStore('Target').dispatch('TARGET_CHANGE_TARGET', {
     position: {
       x: position.x,
       y: position.y,

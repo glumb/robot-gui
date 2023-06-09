@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+import * as THREE from 'three'
+// import { model as ISS } from './scene'
 
 export default class THREERobot {
   constructor(V_initial, limits, scene) {
@@ -44,83 +45,68 @@ export default class THREERobot {
       mesh.position.set(w / 2, h / 2, d / 2)
       const group = new THREE.Object3D()
       group.position.set(x, y, z)
-      group.add(mesh)
-
-      const geometry1 = new THREE.SphereGeometry( 0.4, 10, 5 ); 
-      const material1 = new THREE.MeshBasicMaterial( {color: 0xaa00aa} );
-      
-
-      console.log(min, max)
-      // min = min / 180 * Math.PI
-      // max = max / 180 * Math.PI
-      const jointGeo1 = new THREE.CylinderGeometry(0.8, 0.8, 0.8 * 2, 32, 32, false, -min, 2 * Math.PI - max + min)
-      const jointGeoMax = new THREE.CylinderGeometry(0.8, 0.8, 0.8 * 2, 32, 32, false, -max, max)
-      const jointGeoMin = new THREE.CylinderGeometry(0.8, 0.8, 0.8 * 2, 32, 32, false, 0, -min)
-      const jointMesh1 = new THREE.Mesh(jointGeo1, new THREE.MeshBasicMaterial({
-        color: 0xffbb00,
-      }))
-      const jointMeshMax = new THREE.Mesh(jointGeoMax, new THREE.MeshBasicMaterial({
-        color: 0x009900,
-      }))
-      const jointMeshMin = new THREE.Mesh(jointGeoMin, new THREE.MeshBasicMaterial({
-        color: 0xdd2200,
-      }))
-
-      const joint = new THREE.Group()
-      // joint.add(jointMesh1, jointMesh2)
-      // joint.add(jointMeshMax, jointMeshMin, jointMesh1)
-      
-
-      scope.joints.push(joint)
-
-      const sphere = new THREE.Mesh( geometry1, material1 ); 
-      sphere.position.set(w/2, h/2, d/2)
-      
+      if(jointNumber > 4) group.add(mesh)
+            
+      var xpos = w/2
+      var ypos = h/2
+      var zpos = d/2
+      let xrot = (Math.PI)/2
+      let yrot = 0
+      var zrot = 0
+      var path = "/robot_arm_" + jointNumber + ".json"
 
       switch (jointNumber) {
         case 0:
-          joint.rotation.x = Math.PI / 2
+          zpos -= 0.4
           break
         case 1:
-          // joint.rotation.x = Math.PI / 2
+          xpos -= 2.05
+          ypos -= 0.5
           break
         case 2:
-          // joint.rotation.x = Math.PI / 2
+          xpos -= 1.5
+          xrot = (Math.PI) /2 
           break
         case 3:
-          joint.rotation.z = Math.PI / 2
-          // joint.rotation.y = Math.PI
+          xpos += 0.8
+          yrot = (Math.PI)
           break
         case 4:
-          // joint.rotation.x = Math.PI / 2
-          joint.rotation.y = Math.PI / 2
+          xpos -= 0.9
+          // group.position.y += 0.5
           break
         case 5:
-          sphere.position.set(-0.7, 0.4, 1.3)
-          joint.rotation.x = Math.PI / 2
           group.rotation.y = Math.PI / 2
-          // group.rotation.z = Math.PI
-          // group.rotation.z = -Math.PI / 2
-          // group.rotation.y += Math.PI
-          // joint.rotation.z = +Math.PI / 2
-          // const axisHelper = new THREE.AxisHelper(3)
-          // axisHelper.rotation.x = Math.PI
-          // group.add(axisHelper)
-          const arrowZ = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 3, 0x0000ff)
-          arrowZ.line.material.linewidth = 4
-          //group.add(arrowZ)
-          const arrowY = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 3, 0x00ff00)
-          arrowY.line.material.linewidth = 4
-          //group.add(arrowY)
-          const arrowX = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 3, 0xff0000)
-          arrowX.line.material.linewidth = 4
-          //group.add(arrowX)
-          // joint.add(getVectorArrow([0,0,0],[0,0,5]))
+          zrot = (Math.PI) / 2
+          zpos -= 1.3
           break
       }
 
-      group.add( sphere );
-      group.add(joint)
+      const loader = new THREE.ObjectLoader();
+      loader.load(
+        // resource URL
+        path,
+
+        // onLoad callback
+        // Here the loaded data is assumed to be an object
+        function ( obj ) {
+          // Add the loaded object to the scene
+          group.add( obj );
+          obj.position.set(xpos, ypos, zpos)
+          obj.rotation.set(xrot, yrot, zrot)
+        },
+
+        // onProgress callback
+        function ( xhr ) {
+          // console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+        },
+
+        // onError callback
+        function ( err ) {
+          console.error( 'An error happened' );
+        }
+      );
+
       return group
     }
 

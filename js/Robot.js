@@ -16,10 +16,10 @@ const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
 // ]
 const geo = [
     [0, 0, 0],
-    [4, 0, 0],
+    [4.1, 0, 0],
     [3, 0, 0],
-    [1, 0, 0],
-    [0.5, 0, 0],
+    [1.65, 0, 0],
+    [1.7, 0, 0],
     [0, 0, 0],
   ]
 const defaultRobotState = {
@@ -60,7 +60,7 @@ const defaultRobotState = {
     J4: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
     J5: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
   },
-  configuration: [false, false, false],
+  configuration: [false, true, false],
   geometry: {
     V0: {
       x: geo[0][0],
@@ -142,6 +142,8 @@ robotStore.action('ROBOT_CHANGE_TARGET', (state, data) => {
   for(let i = 0; i < anglesDeg.length; i++) {
     anglesDeg[i] = anglesDeg[i] / Math.PI * 180
   }
+
+  console.log(data.position)
 
   let invalid = false
   for(let out of outOfBounds) {

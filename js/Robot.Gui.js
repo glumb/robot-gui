@@ -56,23 +56,33 @@ function updatePoses() {
   }
 }
 
+const targetBound = 0.8
 function checkWin() {
-  if((robPosition.x < target.position.x + 1.5) && (robPosition.x > target.position.x - 1.5)) {
-    if(robPosition.y < target.position.y + 1.5 && robPosition.y > target.position.y - 1.5) {
-      if(robPosition.z < target.position.z + 1.5 && robPosition.z > target.position.z - 1.5) {
+  if((robPosition.x < target.position.x + targetBound) && (robPosition.x > target.position.x - targetBound)) {
+    if(robPosition.y < target.position.y + targetBound && robPosition.y > target.position.y - targetBound) {
+      if(robPosition.z < target.position.z + targetBound && robPosition.z > target.position.z - targetBound) {
 
         // if((state.rotation.x < targetT.rotation.x + 1) && (state.rotation.x > targetT.rotation.x - 1)) { //1 radian of error allowed lols
         //   if(state.rotation.y < targetT.rotation.y + 1 && state.rotation.y > targetT.rotation.y - 1) {
         //     if(state.rotation.z < targetT.rotation.z + 1 && state.rotation.z > targetT.rotation.z - 1) {
 
-              target.position.x = Math.random() * 24 - 12
-              target.position.y = Math.random() * 24 - 12
-              target.position.z = Math.random() * 10 + 2
+        target.rotation.x = Math.random() * (2 * Math.PI)
+        target.rotation.y = Math.random() * (2 * Math.PI)
+        target.rotation.z = Math.random() * (2 * Math.PI)
 
-              target.rotation.x = Math.random() * (2 * Math.PI)
-              target.rotation.y = Math.random() * (2 * Math.PI)
-              target.rotation.z = Math.random() * (2 * Math.PI)
-              setTarget(target.position, target.rotation)
+        let bounds = {
+          x: [-3, 3],
+          y: [0, 6],
+          z: [-2.5, 3]
+        }
+
+        target.position.x = Math.random() * (bounds.x[1]-bounds.x[0]) + bounds.x[0]
+        target.position.y = Math.random() * (bounds.y[1]-bounds.y[0]) + bounds.y[0]
+        target.position.z = Math.random() * (bounds.z[1]-bounds.z[0]) + bounds.z[0]
+
+        console.log(target.position)
+          
+        targetChangedAction()
         //     }
         //   }
         // }
