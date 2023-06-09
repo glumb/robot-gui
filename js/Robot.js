@@ -1,18 +1,7 @@
 import { storeManager } from './State'
 import { InverseKinematic as Kinematic } from './InverseKinematic'
 
-// localState = {
-//   jointOutOfBound: [false, false, false, false, false, false],
-// }
 const maxAngleVelocity = 90.0 / (180.0 * Math.PI) / 1000.0
-// const geo = [
-//   [2.5 + 2.3, 0, 7.3],
-//   [0, 0, 13.0],
-//   [1, 0, 2],
-//   [12.6, 0, 0],
-//   [3.6, 0, 0],
-//   [0, 0, 0],
-// ]
 const geo = [
     [0, 0, 0],
     [4.1, 0, 0],
@@ -59,7 +48,7 @@ const defaultRobotState = {
     J4: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
     J5: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
   },
-  configuration: [false, true, false],
+  configuration: [false, false, false],
   geometry: {
     V0: {
       x: geo[0][0],
@@ -239,32 +228,6 @@ robotStore.action('ROBOT_CHANGE_ANGLES', (state, angles) => {
   } else {
     return Object.assign({}, state, state)
   }
-  // return Object.assign({}, state, {
-  //   target: {
-  //     position: {
-  //       x: TCPpose[0],
-  //       y: TCPpose[1],
-  //       z: TCPpose[2],
-  //     },
-  //     rotation: {
-  //       x: TCPpose[3],
-  //       y: TCPpose[4],
-  //       z: TCPpose[5],
-  //     },
-  //   },
-  // }, {
-  //   angles: {
-  //     A0: angles[0],
-  //     A1: angles[1],
-  //     A2: angles[2],
-  //     A3: angles[3],
-  //     A4: angles[4],
-  //     A5: angles[5],
-  //   },
-  // })
-  // { todo
-  //   jointOutOfBound: [...result],
-  // }
 })
 
 robotStore.action('ROBOT_CHANGE_GEOMETRY', (state, data) => {

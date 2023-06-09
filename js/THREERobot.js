@@ -11,15 +11,7 @@ export default class THREERobot {
     const scope = this
 
     let parentObject = this.THREE
-    // parentObject.rotation.x = Math.PI / 2
-    // let colors = [
-    //     0x05668D,
-    //     0x028090,
-    //     0x00A896,
-    //     0x02C39A,
-    //     0xF0F3BD,
-    //     0x0
-    // ]
+
     const colors = [
       0xaaaaaa,
       0xbbbbbb,
