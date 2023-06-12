@@ -1,15 +1,7 @@
 import { storeManager } from './State'
-import { robotStore } from './Robot'
 import { checkWin } from './RobotEEControl'
 
-const geometry = storeManager.getStore('Robot').getState().geometry
-const jointLimits = storeManager.getStore('Robot').getState().jointLimits
-
-const robotGuiStore = storeManager.createStore('RobotGui', {})
-
-
 const DEG_TO_RAD = Math.PI / 180
-const RAD_TO_DEG = 180 / Math.PI
 
 var anglesDeg = {
   A0: 0,
@@ -20,38 +12,17 @@ var anglesDeg = {
   A5: 0,
 }
 
-var robPosition = storeManager.getStore('Robot').getState().target.position
-var robRotation = storeManager.getStore('Robot').getState().target.rotation
-var target = storeManager.getStore('Target').getState()
+const robotStore = storeManager.getStore('Robot')
 
 function updatePoses() {
-  robPosition = storeManager.getStore('Robot').getState().target.position
-  robRotation = storeManager.getStore('Robot').getState().target.rotation
-  target = storeManager.getStore('Target').getState()
-
   anglesDeg = {
-    A0: storeManager.getStore('Robot').getState().angles.A0 * 180 / Math.PI,
-    A1: storeManager.getStore('Robot').getState().angles.A1 * 180 / Math.PI,
-    A2: storeManager.getStore('Robot').getState().angles.A2 * 180 / Math.PI,
-    A3: storeManager.getStore('Robot').getState().angles.A3 * 180 / Math.PI,
-    A4: storeManager.getStore('Robot').getState().angles.A4 * 180 / Math.PI,
-    A5: storeManager.getStore('Robot').getState().angles.A5 * 180 / Math.PI,
+    A0: robotStore.getState().angles.A0 * 180 / Math.PI,
+    A1: robotStore.getState().angles.A1 * 180 / Math.PI,
+    A2: robotStore.getState().angles.A2 * 180 / Math.PI,
+    A3: robotStore.getState().angles.A3 * 180 / Math.PI,
+    A4: robotStore.getState().angles.A4 * 180 / Math.PI,
+    A5: robotStore.getState().angles.A5 * 180 / Math.PI,
   }
-}
-
-function setTarget(position, rotation) {
-  storeManager.dispatch('TARGET_CHANGE_TARGET', {
-    position: {
-      x: position.x,
-      y: position.y,
-      z: position.z,
-    },
-    rotation: {
-      x: rotation.x,
-      y: rotation.y,
-      z: rotation.z,
-    },
-  })
 }
 
 const rotStep = 5;

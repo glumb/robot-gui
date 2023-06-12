@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { objectLoader } from './scene'
+import { camera3 } from './scene'
 
 export default class THREERobot {
   constructor(V_initial, limits, scene) {
@@ -37,7 +38,7 @@ export default class THREERobot {
       mesh.position.set(w / 2, h / 2, d / 2)
       const group = new THREE.Object3D()
       group.position.set(x, y, z)
-      if(jointNumber > 4) group.add(mesh)
+      // group.add(mesh)
             
       var xpos = w/2
       var ypos = h/2
@@ -71,6 +72,14 @@ export default class THREERobot {
           group.rotation.y = Math.PI / 2
           zrot = (Math.PI) / 2
           zpos -= 1.3
+
+          group.add(mesh)
+          let eeBB = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3())
+          eeBB.setFromObject(mesh)
+
+          camera3.lookAt(0, 0, 20)
+          group.add(camera3);
+          camera3.position.set(-0.1, 1, -1.7)
           break
       }
 
@@ -85,6 +94,12 @@ export default class THREERobot {
           group.add( obj );
           obj.position.set(xpos, ypos, zpos)
           obj.rotation.set(xrot, yrot, zrot)
+          obj.traverse(function(node) {
+            if(node.isMesh) {
+              node.castShadow = true
+              node.receiveShadow = true
+            }
+          })
         },
 
         // onProgress callback

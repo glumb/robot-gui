@@ -1,7 +1,6 @@
-import { store } from "./Target";
-import { targetChangedAction } from "./Target";
+import { storeManager } from "./State";
 
-var robotStore = store.getStore('Robot')
+var robotStore = storeManager.getStore('Robot')
 var robotTarget = robotStore.getState().target
 var robPosition = robotTarget.position
 var robRotation = robotTarget.rotation
@@ -12,7 +11,7 @@ function updateRobPose() {
     robRotation = robotTarget.rotation
 }
 
-var target = store.getStore('Target').getState()
+var target = storeManager.getStore('Target').getState()
 
 const targetBound = 0.8
 const targetSpawnBounds = {

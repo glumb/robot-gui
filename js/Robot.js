@@ -14,8 +14,8 @@ const defaultRobotState = {
   target: {
     position: {
       x: 0,
-      y: 13,
-      z: 7,
+      y: 10.5,
+      z: 0,
     },
     rotation: {
       x: -((Math.PI)/2),
