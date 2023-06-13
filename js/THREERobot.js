@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { objectLoader } from './scene'
+import { loadObject } from './scene'
 import { camera3 } from './camera'
 
 export default class THREERobot {
@@ -83,35 +83,13 @@ export default class THREERobot {
           break
       }
 
-      objectLoader.load(
-        // resource URL
-        path,
-
-        // onLoad callback
-        // Here the loaded data is assumed to be an object
-        function ( obj ) {
-          // Add the loaded object to the scene
-          group.add( obj );
-          obj.position.set(xpos, ypos, zpos)
-          obj.rotation.set(xrot, yrot, zrot)
-          obj.traverse(function(node) {
-            if(node.isMesh) {
-              node.castShadow = true
-              node.receiveShadow = true
-            }
-          })
-        },
-
-        // onProgress callback
-        function ( xhr ) {
-          // console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-        },
-
-        // onError callback
-        function ( err ) {
-          console.error( 'An error happened' );
-        }
-      );
+      loadObject(path, {
+        position: [xpos, ypos, zpos],
+        rotation: [xrot, yrot, zrot],
+        castShadow: true,
+        receiveShadow: true,
+        addTo: group
+      })
 
       return group
     }
