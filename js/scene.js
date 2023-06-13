@@ -5,6 +5,7 @@ import { storeManager } from './State';
 
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls'
+// import { animate } from './camera'
 
 
 const THREEStore = storeManager.createStore('THREE', {})
@@ -17,7 +18,7 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setClearColor(0x333333)
 renderer.outputColorSpace = THREE.SRGBColorSpace
-renderer.toneMapping = THREE.ACESFilmicToneMapping
+// renderer.toneMapping = THREE.ACESFilmicToneMapping
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild( renderer.domElement );
 renderer.shadowMap.enabled = true;
@@ -26,127 +27,6 @@ renderer.shadowMap.type = THREE.PCFShadowMap
 console.log(renderer.capabilities.maxTextureSize)
 // create a scene
 const scene = new THREE.Scene()
-
-// toggle camera mode
-const perspectiveCamera = true
-let camera
-if (perspectiveCamera) {
-    camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000)
-} else {
-    camera = new THREE.OrthographicCamera(
-        window.innerWidth / -2,
-        window.innerWidth / 2,
-        window.innerHeight / 2,
-        window.innerHeight / -2, -500, 1000)
-    camera.zoom = 20
-    camera.updateProjectionMatrix()
-}
-
-let windowWidth, windowHeight;
-let mouseX = 0, mouseY = 0;
-
-const views = [
-    {
-        left: 0.5,
-        bottom: 0,
-        width: 0.5,
-        height: 1.0,
-        eye: [ -10.7, 11.4, 6.9 ],
-        lookAt: [0, 5, 0],
-        up: [ 0, 0, 1 ],
-        fov: 40,
-    },
-    {
-        left: 0,
-        bottom: 0,
-        width: 0.5,
-        height: 0.5,
-        eye: [ 3.7, -0.75, -0.5 ],
-        lookAt: [0, 5, 0],
-        up: [ 0, 0, 1 ],
-        fov: 100,
-    },
-    {
-        left: 0,
-        bottom: 0.5,
-        width: 0.5,
-        height: 0.5,
-        eye: [ 0, 11, 0 ],
-        lookAt: [0, 12, 0],
-        up: [ 0, 0, 1 ],
-        fov: 50,
-    }
-];
-
-for ( let ii = 0; ii < views.length; ++ ii ) {
-
-    const view = views[ ii ];
-    const camera = new THREE.PerspectiveCamera( view.fov, window.innerWidth / window.innerHeight, 0.1, 10000 );
-    camera.position.fromArray( view.eye );
-    camera.up.fromArray( view.up );
-    camera.lookAt(new THREE.Vector3().fromArray( view.lookAt ))
-    view.camera = camera;
-
-}
-
-function onDocumentMouseMove( event ) {
-
-    mouseX = ( event.clientX - windowWidth / 2 );
-    mouseY = ( event.clientY - windowHeight / 2 );
-
-}
-
-document.addEventListener( 'mousemove', onDocumentMouseMove );
-
-function render() {
-
-    updateSize();
-
-    for ( let ii = 0; ii < views.length; ++ ii ) {
-
-        const view = views[ ii ];
-        const camera = view.camera;
-
-        const left = Math.floor( windowWidth * view.left );
-        const bottom = Math.floor( windowHeight * view.bottom );
-        const width = Math.floor( windowWidth * view.width );
-        const height = Math.floor( windowHeight * view.height );
-
-        renderer.setViewport( left, bottom, width, height );
-        renderer.setScissor( left, bottom, width, height );
-        renderer.setScissorTest( true );
-        renderer.setClearColor( view.background );
-
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-
-        renderer.render( scene, camera );
-
-    }
-}
-
-
-function updateSize() {
-
-    if ( windowWidth != window.innerWidth || windowHeight != window.innerHeight ) {
-
-        windowWidth = window.innerWidth;
-        windowHeight = window.innerHeight;
-
-        renderer.setSize( windowWidth, windowHeight );
-
-    }
-
-}
-
-// scene.rotation.x = -(Math.PI)/2;
-camera.up.set(0, 0, 1)
-camera.position.set(10, 10, 10)
-
-
-scene.add(camera)
-
-// renderer.render( scene, camera );
 
 // lights
 const light = new THREE.AmbientLight(0xffffff)
@@ -160,49 +40,6 @@ point.intensity = 1.3
 point.shadow.mapSize.set(16384, 16384)
 point.shadow.radius = 5
 scene.add(point)
-
-
-const orbitControls = new OrbitControls(views[0].camera, renderer.domElement)
-// orbitControls.addEventListener('change', () => renderer.render(scene, camera))
-
-const flyControls = new FlyControls( camera, renderer.domElement );
-
-flyControls.movementSpeed = 20;
-flyControls.rollSpeed = Math.PI / 12;
-flyControls.autoForward = false;
-flyControls.dragToLook = true;
-
-//controls.update(0.01)
-
-
-function onWindowResize() {
-    if (perspectiveCamera) {
-        camera.aspect = window.innerWidth / window.innerHeight
-        camera.updateProjectionMatrix()
-    } else {
-        camera.left = window.innerWidth / -2
-        camera.right = window.innerWidth / 2
-        camera.top = window.innerHeight / 2
-        camera.bottom = window.innerHeight / -2
-        camera.updateProjectionMatrix()
-    }
-
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.render(scene, camera)
-}
-
-window.addEventListener('resize', onWindowResize, false)
-
-const size = 40
-const step = 20
-
-const gridHelper = new THREE.GridHelper(size, step)
-gridHelper.rotation.x = Math.PI / 2
-// scene.add(gridHelper)
-
-const axesHelper = new THREE.AxesHelper(5)
-// scene.add(axesHelper)
-
 
 const manager = new THREE.LoadingManager();
 const objectLoader = new THREE.ObjectLoader( manager );
@@ -219,12 +56,6 @@ manager.onProgress = function ( url, itemsLoaded, itemsTotal) {
     itemsTotal = 68
 	progressBar.value = (itemsLoaded / itemsTotal) * 100
     progressLabel.innerHTML = 'Loaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.'
-};
-
-const progressBarContainer = document.querySelector('.progress-bar-container')
-manager.onLoad = function ( ) {
-	progressBarContainer.style.display = 'none'
-    animate()
 };
 
 // manager.onError = function ( url ) {
@@ -326,33 +157,32 @@ rgbeLoader.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
 /* END THREEJS SCENE SETUP */
 
 // animate()
-function animate() {
-    // renderer.render( scene, camera );
-    // console.log(views[0].camera)
-    render()
-    // 3. update controls with a small step value to "power its engines"
-    // flyControls.update(0.01)
-    orbitControls.update(0.01)
-    // try {
-    //     for(let i = 0; i < 9; i++) {
-    //         let name = "guy" + i
-    //         const guy =  scene.getObjectByName(name)     
-    //         guy.position.x += astronaut[name].x_vel
-    //         guy.position.z += astronaut[name].z_vel
-    //         guy.position.y += astronaut[name].y_vel 
-    //         guy.rotation.x += astronaut[name].x_rot
-    //         guy.rotation.y += astronaut[name].y_rot
-    //     }
-    // } catch (err) {
-    //     //do  nothing idc
-    // }
+// function animate() {
+//     // renderer.render( scene, camera );
+//     // console.log(views[0].camera)
+//     // render()
+//     // 3. update controls with a small step value to "power its engines"
+//     // flyControls.update(0.01)
+//     // orbitControls.update(0.01)
+//     // try {
+//     //     for(let i = 0; i < 9; i++) {
+//     //         let name = "guy" + i
+//     //         const guy =  scene.getObjectByName(name)     
+//     //         guy.position.x += astronaut[name].x_vel
+//     //         guy.position.z += astronaut[name].z_vel
+//     //         guy.position.y += astronaut[name].y_vel 
+//     //         guy.rotation.x += astronaut[name].x_rot
+//     //         guy.rotation.y += astronaut[name].y_rot
+//     //     }
+//     // } catch (err) {
+//     //     //do  nothing idc
+//     // }
     
 
-    requestAnimationFrame( animate );
-};
+//     requestAnimationFrame( animate );
+// };
 
 export { scene }
 export { renderer }
-export { camera }
-export { objectLoader}
-export const camera3 = views[2].camera
+export { objectLoader }
+export { manager }

@@ -1,11 +1,9 @@
 import { storeManager } from './State'
-import { robotStore } from './Robot'
 import { scene } from './scene'
-import { renderer } from './scene'
-import { camera } from './scene'
 import * as THREE from 'three'
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
-
+import { camera3 } from './camera';
+import { renderer } from './scene';
 /**
  * + state per module
  * + render on state changed
@@ -17,7 +15,7 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
  */
 
 const defaultState = {
-  controlSpace: 'world',
+  controlSpace: 'local',
   eulerRingsVisible: false,
   controlVisible: false,
   controlMode: 'translate',
@@ -150,7 +148,7 @@ const eulerRings = new THREE.Object3D()
 scene.add(eulerRings)
 createAllRings(eulerRings)
 
-const control = new TransformControls(camera, renderer.domElement)
+const control = new TransformControls(camera3, renderer.domElement)
 let disableUpdate = false
 store.listen([() => store.getStore('Robot').getState().target, state => state], (targetT, state) => {
   if (state.followTarget) {
@@ -230,17 +228,24 @@ window.addEventListener('keydown', (event) => {
   }
 }, false)
 
-store.action('CONTROL_SPACE_TOGGLE', state => state.controlSpace, controlSpace => ((controlSpace === 'local') ? 'world' : 'local'))
-
-function toggleSpace() {
-  store.dispatch('CONTROL_SPACE_TOGGLE')
-}
-
 function getState() {
   return store.getState()
 }
 
 // TODO change this to match the state first API
+store.action('CONTROL_SPACE_TOGGLE', state => state.controlSpace, controlSpace => ((controlSpace === 'local') ? 'world' : 'local'))
+
+function toggleSpace() {
+  store.getStore("Target").dispatch('CONTROL_SPACE_TOGGLE')
+}
+
+function setSpace(mode) {
+  store.dispatch('CHANGE_CONTROL_SPACE', mode)
+}
+
+store.action('CHANGE_CONTROL_SPACE', (state, data) => ({ ...state,
+  controlSpace: data,
+}))
 
 function setMode(mode) {
   store.dispatch('CHANGE_CONTROL_MODE', mode)

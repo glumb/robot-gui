@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { objectLoader } from './scene'
-import { camera3 } from './scene'
+import { camera3 } from './camera'
 
 export default class THREERobot {
   constructor(V_initial, limits, scene) {
