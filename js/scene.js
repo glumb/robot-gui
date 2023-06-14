@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { storeManager } from './State';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const THREEStore = storeManager.createStore('THREE', {})
 
+
+/* SCENE SETUP */
 
 // threejs setup
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -35,11 +37,16 @@ manager.onError = function ( url ) {
 }
 
 
+// For dev
+const axesHelper = new THREE.AxesHelper( 5 );
+scene.add( axesHelper );
+
 // load background and space station
 loadEnv()
 
 
-// helper functions
+/* HELPER FUNCTIONS */
+
 function setupRenderer() {
 	renderer.setClearColor(0x333333)
 	renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -71,7 +78,7 @@ function loadEnv() {
 		receiveShadow: true,
 		addTo: scene
 	})
-	
+
 	rgbeLoader.load('RenderCrate-HDRI_Orbital_46_Sunset_4K.hdr', function(texture) {
 		texture.mapping = THREE.EquirectangularRefractionMapping
 		scene.background = texture;
@@ -103,6 +110,9 @@ function setupObject( obj, options ) {
 	if(options.addTo === undefined) scene.add(obj)
 	else options.addTo.add(obj)
 }
+
+
+/* EXPORTS */
 
 export { scene }
 export { renderer }

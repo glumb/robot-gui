@@ -21,31 +21,31 @@ const targetSpawnBounds = {
 }
 
 export function checkWin() {
-  if((robPosition.x < target.position.x + targetBound) && (robPosition.x > target.position.x - targetBound)) {
-    if(robPosition.y < target.position.y + targetBound && robPosition.y > target.position.y - targetBound) {
-      if(robPosition.z < target.position.z + targetBound && robPosition.z > target.position.z - targetBound) {
+  // if((robPosition.x < target.position.x + targetBound) && (robPosition.x > target.position.x - targetBound)) {
+  //   if(robPosition.y < target.position.y + targetBound && robPosition.y > target.position.y - targetBound) {
+  //     if(robPosition.z < target.position.z + targetBound && robPosition.z > target.position.z - targetBound) {
 
-        // if((state.rotation.x < targetT.rotation.x + 1) && (state.rotation.x > targetT.rotation.x - 1)) { //1 radian of error allowed lols
-        //   if(state.rotation.y < targetT.rotation.y + 1 && state.rotation.y > targetT.rotation.y - 1) {
-        //     if(state.rotation.z < targetT.rotation.z + 1 && state.rotation.z > targetT.rotation.z - 1) {
+  //       // if((state.rotation.x < targetT.rotation.x + 1) && (state.rotation.x > targetT.rotation.x - 1)) { //1 radian of error allowed lols
+  //       //   if(state.rotation.y < targetT.rotation.y + 1 && state.rotation.y > targetT.rotation.y - 1) {
+  //       //     if(state.rotation.z < targetT.rotation.z + 1 && state.rotation.z > targetT.rotation.z - 1) {
 
-        target.rotation.x = Math.random() * (2 * Math.PI)
-        target.rotation.y = Math.random() * (2 * Math.PI)
-        target.rotation.z = Math.random() * (2 * Math.PI)
+  //       // target.rotation.x = Math.random() * (2 * Math.PI)
+  //       // target.rotation.y = Math.random() * (2 * Math.PI)
+  //       // target.rotation.z = Math.random() * (2 * Math.PI)
 
-        target.position.x = Math.random() * (targetSpawnBounds.x[1]-targetSpawnBounds.x[0]) + targetSpawnBounds.x[0]
-        target.position.y = Math.random() * (targetSpawnBounds.y[1]-targetSpawnBounds.y[0]) + targetSpawnBounds.y[0]
-        target.position.z = Math.random() * (targetSpawnBounds.z[1]-targetSpawnBounds.z[0]) + targetSpawnBounds.z[0]
+  //       target.position.x = Math.random() * (targetSpawnBounds.x[1]-targetSpawnBounds.x[0]) + targetSpawnBounds.x[0]
+  //       target.position.y = Math.random() * (targetSpawnBounds.y[1]-targetSpawnBounds.y[0]) + targetSpawnBounds.y[0]
+  //       target.position.z = Math.random() * (targetSpawnBounds.z[1]-targetSpawnBounds.z[0]) + targetSpawnBounds.z[0]
 
-        console.log(target.position)
+  //       console.log(target.position)
         
-        //     }
-        //   }
-        // }
+  //       //     }
+  //       //   }
+  //       // }
 
-      }
-    }
-  }
+  //     }
+  //   }
+  // }
 }
 
 let keys = {

@@ -1,17 +1,22 @@
 import * as THREE from 'three'
 import { loadObject } from './scene'
 import { camera3 } from './camera'
+// import { scene } from './scene'
+
+import { OBB } from 'three/examples/jsm/math/OBB'
 
 export default class THREERobot {
   constructor(V_initial, limits, scene) {
-    this.THREE = new THREE.Group()
+    this.arm = new THREE.Group()
 
     this.robotBones = []
     this.joints = []
+    this.robotBasicMeshes = []
+    this.bbHelpers = []
 
     const scope = this
 
-    let parentObject = this.THREE
+    let parentObject = this.arm
 
     const colors = [
       0xaaaaaa,
@@ -22,24 +27,36 @@ export default class THREERobot {
       0x00ff00,
     ]
 
-    function createCube(x, y, z, w, h, d, min, max, jointNumber) {
-      const thicken = 0.3
+    function createCube(x, y, z, w, h, d, min, max, jointNumber, robotBasicMeshes) {
+      const thicken = 0.35
 
       const w_thickened = Math.abs(w) + thicken
       const h_thickened = Math.abs(h) + thicken
       const d_thickened = Math.abs(d) + thicken
 
-      const material = new THREE.MeshLambertMaterial({
-        color: colors[jointNumber],
-      })
+      const material = new THREE.MeshBasicMaterial()
       const geometry = new THREE.BoxGeometry(w_thickened, h_thickened, d_thickened)
+      geometry.userData.obb = new OBB();
+      const size = new THREE.Vector3( w_thickened, h_thickened, d_thickened );
+			geometry.userData.obb.halfSize.copy( size ).multiplyScalar( 0.5 );
       const mesh = new THREE.Mesh(geometry, material)
+      mesh.userData.obb = new OBB();
+      mesh.userData.obb.copy( mesh.geometry.userData.obb );
+			mesh.userData.obb.applyMatrix4( mesh.matrixWorld );
+      
+      mesh.material.alphaMap = 0x0
+      mesh.material.opacity = 0
+      mesh.material.transparent = true
+
+      robotBasicMeshes.push(mesh)
 
       mesh.position.set(w / 2, h / 2, d / 2)
+
+
       const group = new THREE.Object3D()
       group.position.set(x, y, z)
-      // group.add(mesh)
-            
+      group.add(mesh)
+      
       var xpos = w/2
       var ypos = h/2
       var zpos = d/2
@@ -53,8 +70,10 @@ export default class THREERobot {
           zpos -= 0.4
           break
         case 1:
+          mesh.position.setY(ypos - 0.5)
           xpos -= 2.05
           ypos -= 0.5
+          
           break
         case 2:
           xpos -= 1.5
@@ -72,10 +91,6 @@ export default class THREERobot {
           group.rotation.y = Math.PI / 2
           zrot = (Math.PI) / 2
           zpos -= 1.3
-
-          group.add(mesh)
-          let eeBB = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3())
-          eeBB.setFromObject(mesh)
 
           camera3.lookAt(0, 0, 20)
           group.add(camera3);
@@ -99,7 +114,8 @@ export default class THREERobot {
     for (let i = 0; i < V_initial.length; i++) {
       const link = V_initial[i]
 
-      const linkGeo = createCube(x, y, z, link[0], link[1], link[2], limits[i][0], limits[i][1], i)
+      const linkGeo = createCube(x, y, z, link[0], link[1], link[2], limits[i][0], limits[i][1], 
+                        i, this.robotBasicMeshes)
       x = link[0]
       y = link[1]
       z = link[2]
@@ -109,10 +125,29 @@ export default class THREERobot {
       this.robotBones.push(linkGeo)
     }
 
-    scene.add(this.THREE)
+    scene.add(this.arm)
 
     this.angles = [0, 0, 0, 0, 0, 0]
+
+    for(let i = 0; i < this.robotBasicMeshes.length; i++) {
+      const mesh = this.robotBasicMeshes[i]
+      const size = mesh.userData.obb.halfSize.multiplyScalar(2)
+      const geometry = new THREE.BoxGeometry(size.x, size.y, size.z)
+      const material = new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: true})
+      const cube = new THREE.Mesh(geometry, material)
+
+      const rotation4 = new THREE.Matrix4().makeRotationZ((Math.PI)/2)
+      mesh.userData.obb.rotation.setFromMatrix4(rotation4)
+
+      cube.position.copy(mesh.userData.obb.center)
+      cube.setRotationFromMatrix(rotation4)
+      this.bbHelpers.push(cube)
+      console.log(cube)
+      scene.add(cube)
+    }
+
   }
+
   setAngles(angles) {
     this.angles = angles
     this.robotBones[0].rotation.z = angles[0]
@@ -137,6 +172,34 @@ export default class THREERobot {
     } else {
       this._resetObjectAndChildrenColor(this.joints[jointIndex])
     }
+  }
+
+  updateBounds() {
+    for (let i = 0; i < this.robotBones.length; i++) {
+      const mesh = this.robotBasicMeshes[i]
+
+      mesh.userData.obb.copy( mesh.geometry.userData.obb );
+			mesh.userData.obb.applyMatrix4( mesh.matrixWorld );
+
+      this.bbHelpers[i].position.copy(mesh.userData.obb.center)
+
+      const rotation4 = new THREE.Matrix4().setFromMatrix3(mesh.userData.obb.rotation)
+      this.bbHelpers[i].setRotationFromMatrix(rotation4)
+    }
+  }
+
+  intersecting(boundingBox) {
+    let inter = false
+    for(let i = 0; i < this.robotBasicMeshes.length; i++) {
+      const mesh = this.robotBasicMeshes[i]
+      if(mesh.userData.obb.intersectsBox3(boundingBox)) inter = true
+    }
+    return inter
+  }
+
+  intersectingEE(boundingBox) {
+    const mesh = this.robotBasicMeshes[5]
+    return mesh.userData.obb.intersectsBox3(boundingBox)
   }
 
   _colorObjectAndChildren(object, hexColor) {

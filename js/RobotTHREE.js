@@ -51,4 +51,16 @@ function buildRobot(state) {
   VisualRobot = new THREERobot(geometry, jointLimits, THREESimulationRobot)
 }
 
+export function updateRobotBounds() {
+  VisualRobot.updateBounds()
+}
+
+export function robotIntersecting(boundingBox) {
+  return VisualRobot.intersecting(boundingBox)
+}
+
+export function robotEEIntersecting(boundingBox) {
+  return VisualRobot.intersectingEE(boundingBox)
+}
+
 export { robotStore }

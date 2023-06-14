@@ -1,9 +1,6 @@
 import * as THREE from 'three';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { storeManager } from './State';
-
-import { FlyControls } from 'three/examples/jsm/controls/FlyControls'
 
 import { scene } from './scene';
 import { renderer } from './scene';
@@ -17,7 +14,9 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 
-const params = {
+/* CONFIG */
+
+const bloomParams = {
     threshold: 0,
     strength: 0.1,
     radius: 0,
@@ -58,81 +57,26 @@ const views = [
     }
 ];
 
+
+
+/* CAMERA AND RENDERING SETUP */
+
+// post-processing passes
 const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
-bloomPass.threshold = params.threshold;
-bloomPass.strength = params.strength;
-bloomPass.radius = params.radius;
+bloomPass.threshold = bloomParams.threshold;
+bloomPass.strength = bloomParams.strength;
+bloomPass.radius = bloomParams.radius;
 
 const outputPass = new OutputPass( THREE.ACESFilmicToneMapping );
 
-const gui = new GUI();
-
-const bloomFolder = gui.addFolder( 'bloom' );
-
-bloomFolder.add( params, 'threshold', 0.0, 1.0 ).onChange( function ( value ) {
-
-    bloomPass.threshold = Number( value );
-
-} );
-
-bloomFolder.add( params, 'strength', 0.0, 3.0 ).onChange( function ( value ) {
-
-    bloomPass.strength = Number( value );
-
-} );
-
-bloomFolder.add( params, 'radius', 0.0, 1.0 ).step( 0.01 ).onChange( function ( value ) {
-
-    bloomPass.radius = Number( value );
-
-} );
-
-bloomFolder.add(params, 'show').onChange(setupPostProc)
-
-const toneMappingFolder = gui.addFolder( 'tone mapping' );
-
-toneMappingFolder.add( params, 'exposure', 0.1, 2 ).onChange( function ( value ) {
-
-    outputPass.toneMappingExposure = Math.pow( value, 4.0 );
-
-} );
-
+// setup
 setupCams()
 setupPostProc()
 
-function setupCams() {
-    for ( let ii = 0; ii < views.length; ++ ii ) {
-
-        const view = views[ ii ];
-        const camera = new THREE.PerspectiveCamera( view.fov, window.innerWidth / window.innerHeight, 0.1, 10000 );
-        camera.position.fromArray( view.eye );
-        camera.up.fromArray( view.up );
-        camera.lookAt(new THREE.Vector3().fromArray( view.lookAt ))
-        view.camera = camera;
-    }
-}
-
-function setupPostProc() {
-    for ( let ii = 0; ii < views.length; ++ ii ) {
-        const view = views[ii]
-        const camera = view.camera
-        const composer = new EffectComposer( renderer );
-
-        const renderPass = new RenderPass( scene, camera );
-        composer.addPass( renderPass ); 
-        
-        const glitchPass = new GlitchPass();
-        // composer.addPass( glitchPass );
-
-        if(params.show) composer.addPass( bloomPass );
-        composer.addPass( outputPass ); 
-
-        view.composer = composer
-    }
-}
+// camera controls for large view
+const orbitControls = new OrbitControls(views[0].camera, renderer.domElement)
 
 let windowWidth, windowHeight;
-
 function render() {
 
     updateSize();
@@ -160,58 +104,79 @@ function render() {
 }
 
 
-function updateSize() {
+/* HELPER FUNCTIONS */
 
+function updateSize() {
     if ( windowWidth != window.innerWidth || windowHeight != window.innerHeight ) {
 
         windowWidth = window.innerWidth;
         windowHeight = window.innerHeight;
 
         renderer.setSize( windowWidth, windowHeight );
-
     }
-
 }
 
-const orbitControls = new OrbitControls(views[0].camera, renderer.domElement)
-// orbitControls.addEventListener('change', () => renderer.render(scene, camera))
+function setupCams() {
+    for ( let ii = 0; ii < views.length; ++ ii ) {
 
-// const flyControls = new FlyControls( camera, renderer.domElement );
+        const view = views[ ii ];
+        const camera = new THREE.PerspectiveCamera( view.fov, window.innerWidth / window.innerHeight, 0.1, 10000 );
+        camera.position.fromArray( view.eye );
+        camera.up.fromArray( view.up );
+        camera.lookAt(new THREE.Vector3().fromArray( view.lookAt ))
+        view.camera = camera;
+    }
+}
 
-// flyControls.movementSpeed = 20;
-// flyControls.rollSpeed = Math.PI / 12;
-// flyControls.autoForward = false;
-// flyControls.dragToLook = true;
+function setupPostProc() {
+    for ( let ii = 0; ii < views.length; ++ ii ) {
+        const view = views[ii]
+        const camera = view.camera
+        const composer = new EffectComposer( renderer );
 
-const progressBarContainer = document.querySelector('.progress-bar-container')
-manager.onLoad = function ( ) {
-	progressBarContainer.style.display = 'none'
-    animate()
-};
+        const renderPass = new RenderPass( scene, camera );
+        composer.addPass( renderPass ); 
+        
+        const glitchPass = new GlitchPass();
+        // composer.addPass( glitchPass );
 
-export function animate() {
-    // renderer.render( scene, camera );
-    // console.log(views[0].camera)
+        if(bloomParams.show) composer.addPass( bloomPass );
+        composer.addPass( outputPass ); 
+
+        view.composer = composer
+    }
+}
+
+function setupBloomGui() {
+    const gui = new GUI();
+
+    const bloomFolder = gui.addFolder( 'bloom' );
+
+    bloomFolder.add( bloomParams, 'threshold', 0.0, 1.0 ).onChange( function ( value ) {
+        bloomPass.threshold = Number( value );
+    } );
+
+    bloomFolder.add( bloomParams, 'strength', 0.0, 3.0 ).onChange( function ( value ) {
+        bloomPass.strength = Number( value );
+    } );
+
+    bloomFolder.add( bloomParams, 'radius', 0.0, 1.0 ).step( 0.01 ).onChange( function ( value ) {
+        bloomPass.radius = Number( value );
+    } );
+
+    bloomFolder.add(bloomParams, 'show').onChange(setupPostProc)
+
+    const toneMappingFolder = gui.addFolder( 'tone mapping' );
+
+    toneMappingFolder.add( bloomParams, 'exposure', 0.1, 2 ).onChange( function ( value ) {
+        outputPass.toneMappingExposure = Math.pow( value, 4.0 );
+    } );
+}
+
+
+/* EXPORTS */
+export function updateCamera() {
     render()
-    // 3. update controls with a small step value to "power its engines"
-    // flyControls.update(0.01)
     orbitControls.update(0.01)
-    // try {
-    //     for(let i = 0; i < 9; i++) {
-    //         let name = "guy" + i
-    //         const guy =  scene.getObjectByName(name)     
-    //         guy.position.x += astronaut[name].x_vel
-    //         guy.position.z += astronaut[name].z_vel
-    //         guy.position.y += astronaut[name].y_vel 
-    //         guy.rotation.x += astronaut[name].x_rot
-    //         guy.rotation.y += astronaut[name].y_rot
-    //     }
-    // } catch (err) {
-    //     //do  nothing idc
-    // }
-    
-
-    requestAnimationFrame( animate );
-};
-
+}
 export const camera3 = views[2].camera

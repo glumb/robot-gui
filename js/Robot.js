@@ -45,7 +45,7 @@ const defaultRobotState = {
     J1: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
     J2: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
     J3: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
-    J4: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
+    J4: [-120 / 180 * Math.PI, 120 / 180 * Math.PI],
     J5: [-270 / 180 * Math.PI, 270 / 180 * Math.PI],
   },
   configuration: [false, false, false],
