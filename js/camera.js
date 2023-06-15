@@ -21,7 +21,7 @@ const bloomParams = {
     strength: 0.1,
     radius: 0,
     exposure: 1,
-    show: true
+    show: false
 };
 
 const views = [
