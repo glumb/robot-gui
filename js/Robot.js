@@ -131,7 +131,7 @@ robotStore.action('ROBOT_CHANGE_TARGET', (state, data) => {
     anglesDeg[i] = anglesDeg[i] / Math.PI * 180
   }
 
-  console.log(data.position)
+  // console.log(data.position)
 
   let invalid = false
   for(let out of outOfBounds) {
@@ -140,6 +140,8 @@ robotStore.action('ROBOT_CHANGE_TARGET', (state, data) => {
   for(let angle of angles) {
     if(isNaN(angle)) invalid = true
   }
+
+  // console.log(invalid)
 
   if(!invalid) {
     return Object.assign({}, state, {

@@ -4,6 +4,7 @@ import { updateCamera } from "./camera";
 import { robotEEIntersecting, updateRobotBounds } from "./RobotTHREE";
 import { robotIntersecting } from "./RobotTHREE";
 import { targetCylinder } from "./Target";
+import { altUpdateGamepads, updateGamepads } from "./gamepad";
 
 import { targetBB } from "./Target";
 
@@ -17,7 +18,12 @@ export function animate() {
     updateCamera() 
     updateTarget()
     updateRobotBounds()
-    requestAnimationFrame( animate );
+    
+    setTimeout( function() {
+
+        requestAnimationFrame( animate );
+
+    }, 1000 / 60 );
 
     targetCylinder.material.color.setHex(0xff0000)
     if(robotIntersecting(targetBB)) {
@@ -26,4 +32,7 @@ export function animate() {
     if(robotEEIntersecting(targetBB)) {
         targetCylinder.material.color.setHex(0xffff00)
     }
+
+    // updateGamepads()
+    altUpdateGamepads()
 };

@@ -42,7 +42,7 @@ const axesHelper = new THREE.AxesHelper( 5 );
 scene.add( axesHelper );
 
 // load background and space station
-loadEnv()
+// loadEnv()
 
 
 /* HELPER FUNCTIONS */

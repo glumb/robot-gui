@@ -1,4 +1,3 @@
-
 export class RobotController {
     static #DEG_TO_RAD = Math.PI / 180
     constructor(robotStore, config = { rotStep: (Math.PI)/36, transStep: 0.25 }) {
@@ -38,26 +37,30 @@ export class RobotController {
         this.#setRobotTarget( this.EEposition, this.EErotation )
     }
 
-    incrementJoint( jointNumber ) { this.#moveJoint( jointNumber, 1 ) }
-    decrementJoint( jointNumber ) { this.#moveJoint( jointNumber, -1 ) }
-    incrementPosition( axis ) { this.#moveAlongAxis( axis, 1 ) }
-    decrementPosition( axis ) { this.#moveAlongAxis( axis, -1 ) }
-    incrementRotation( axis ) { this.#rotateAroundAxis( axis, 1 ) }
-    decrementRotation( axis ) { this.#rotateAroundAxis( axis, -1 ) }
+    incrementJoint( jointNumber ) { this.moveJoint( jointNumber, 1 ) }
+    decrementJoint( jointNumber ) { this.moveJoint( jointNumber, -1 ) }
+    incrementPosition( axis ) { this.moveAlongAxis( axis, 1 ) }
+    decrementPosition( axis ) { this.moveAlongAxis( axis, -1 ) }
+    incrementRotation( axis ) { this.rotateAroundAxis( axis, 1 ) }
+    decrementRotation( axis ) { this.rotateAroundAxis( axis, -1 ) }
 
-    #moveJoint( jointNumber, direction ) {
-        this.angles[ "A" + jointNumber ] += this.rotStep * direction
-        this.#setRobotAngles( this.angles )
+    moveJoint( jointNumber, direction ) {
+        const key = "A" + jointNumber
+        const step = this.rotStep * direction
+        const angles = incrementDictVal( this.angles, key, step )
+        this.#setRobotAngles( angles )
     }
 
-    #moveAlongAxis( axis, direction ) {
-        this.EEposition[ axis ] += this.transStep * direction
-        this.#setRobotTarget( this.EEposition, this.EErotation )
+    moveAlongAxis( axis, direction ) {
+        const step = this.transStep * direction
+        const position = incrementDictVal(this.EEposition, axis, step)
+        this.#setRobotTarget( position, this.EErotation )
     }
 
-    #rotateAroundAxis( axis, direction ) {
-        this.EErotation[ axis ] += this.rotStep * direction
-        this.#setRobotTarget( this.EEposition, this.EErotation )
+    rotateAroundAxis( axis, direction ) {
+        const step = this.rotStep * direction
+        const rotation = incrementDictVal(this.EErotation, axis, step)
+        this.#setRobotTarget( this.EEposition, rotation )
     }
 
     #updateState() {
@@ -75,4 +78,12 @@ export class RobotController {
         this.robotStore.dispatch('ROBOT_CHANGE_ANGLES', angles)
         this.#updateState()
     }
+}
+
+
+function incrementDictVal( dict, key, amount ) {
+    var dictCopy = {}
+    Object.assign( dictCopy, dict )
+    dictCopy[ key ] += amount
+    return dictCopy
 }
