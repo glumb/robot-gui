@@ -5,7 +5,7 @@ export class RotaryEncoder {
         this.secondButtonIndex = secondButtonIndex
     }
 
-    read() {
+    readDirection() {
         const gamepads = navigator.getGamepads()
         const gamepad = gamepads[this.gamepadIndex]
         const buttons = gamepad.buttons

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { storeManager } from './State';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { TargetBox } from './targetBox';
 
 const THREEStore = storeManager.createStore('THREE', {})
 
@@ -43,7 +44,6 @@ scene.add( axesHelper );
 
 // load background and space station
 // loadEnv()
-
 
 /* HELPER FUNCTIONS */
 

@@ -3,7 +3,7 @@ import { storeManager } from "./State";
 
 var robotStore = storeManager.getStore('Robot')
 
-export const robotController = new RobotController(robotStore, {transStep: 0.08})
+export const robotController = new RobotController(robotStore)
 
 var target = storeManager.getStore('Target').getState()
 

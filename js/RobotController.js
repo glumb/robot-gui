@@ -1,6 +1,6 @@
 export class RobotController {
     static #DEG_TO_RAD = Math.PI / 180
-    constructor(robotStore, config = { rotStep: (Math.PI)/36, transStep: 0.25 }) {
+    constructor(robotStore, transStep = 0.25, rotStep = (Math.PI)/36) {
         // Allows us to get and set robot state
         this.robotStore = robotStore
         
@@ -10,8 +10,8 @@ export class RobotController {
         this.EErotation = robotStore.getState().target.rotation
     
         // How much to move by
-        this.rotStep = config.rotStep
-        this.transStep = config.transStep
+        this.rotStep = rotStep
+        this.transStep = transStep
     }
 
     setTransStep( step ) {
@@ -53,13 +53,21 @@ export class RobotController {
 
     moveAlongAxis( axis, direction ) {
         const step = this.transStep * direction
-        const position = incrementDictVal(this.EEposition, axis, step)
-        this.#setRobotTarget( position, this.EErotation )
+        this.moveAlongAxisAmt( axis, step )
     }
 
     rotateAroundAxis( axis, direction ) {
         const step = this.rotStep * direction
-        const rotation = incrementDictVal(this.EErotation, axis, step)
+        this.rotateAroundAxisAmt( axis, step )
+    }
+
+    moveAlongAxisAmt( axis, amt ) {
+        const position = incrementDictVal(this.EEposition, axis, amt)
+        this.#setRobotTarget( position, this.EErotation )
+    }
+
+    rotateAroundAxisAmt( axis, amt ) {
+        const rotation = incrementDictVal(this.EErotation, axis, amt)
         this.#setRobotTarget( this.EEposition, rotation )
     }
 

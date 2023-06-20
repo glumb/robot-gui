@@ -86,9 +86,7 @@ for(let control in endEffectorControlMapping2) {
     endEffectorControlFolder2.add( mapping, "device", rotaryEncoders ).name(control)
 }
 
-
-export function altUpdateGamepads() {
-
+function getGamepad() {
     const gamepads = navigator.getGamepads()
     if(!gamepads) return
 
@@ -97,11 +95,19 @@ export function altUpdateGamepads() {
     try {
         buttons = gamepad.buttons
     } catch ( err ) {
-        // console.log(err)
-        return
+        return false
     }
 
-    console.log(endEffectorControlMapping2["x position"]["previous"])
+    return gamepad
+}
+
+
+export function altUpdateGamepads() {
+    const gamepad = getGamepad()
+    if(!gamepad) return
+    
+
+    // console.log(endEffectorControlMapping2["x position"]["previous"])
 
     for(const control in endEffectorControlMapping2) {
         const mapping = endEffectorControlMapping2[control]
@@ -111,7 +117,7 @@ export function altUpdateGamepads() {
        
 
         if(mapping.device === "select device") continue
-        const direction = mapping.device.read()     // -1, 0, or 1
+        const direction = mapping.device.readDirection()     // -1, 0, or 1
         if(direction === 0) {
             mapping["previous"] = direction
             continue
@@ -150,4 +156,40 @@ export function updateGamepads() {
             mapping.func()
         }
     }
+}
+
+
+
+let translationalVelocity = {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+}
+
+let rotationalVelocity = {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+}
+
+function updateEE( tVel, rVel ) {
+    for(let axis in tVel) {
+        robotController.moveAlongAxisAmt( axis, tVel[axis] )
+        robotController.rotateAroundAxis( axis, rVel[axis] )
+    }
+}
+
+export function velUpdateGamepads() {
+    const gamepad = getGamepad()
+    if(!gamepad) return
+
+    console.log(gamepad.axes)
+
+    translationalVelocity["y"] = gamepad.axes[3] * 0.5
+    // translationalVelocity["y"] = gamepad.axes[1] * 0.5
+    // translationalVelocity["z"] = gamepad.axes[2] * 0.5
+    // rotationalVelocity["x"] = gamepad.axes[3] * 0.5
+    // rotationalVelocity["y"] = gamepad.axes[4] * 0.5
+    // rotationalVelocity["z"] = gamepad.axes[5] * 0.5
+    updateEE( translationalVelocity, rotationalVelocity )
 }
