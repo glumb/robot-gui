@@ -1,20 +1,35 @@
 export class RotaryEncoder {
-    constructor( gamepadIndex, firstButtonIndex, secondButtonIndex ){
+    constructor( gamepadIndex, firstButtonIndex, secondButtonIndex, axisIndex ){
         this.gamepadIndex = gamepadIndex
         this.firstButtonIndex = firstButtonIndex
         this.secondButtonIndex = secondButtonIndex
+        this.axisIndex = axisIndex
+
+        const gamepads = navigator.getGamepads()
+        this.gamepad = gamepads[ this.gamepadIndex ]
     }
 
     readDirection() {
-        const gamepads = navigator.getGamepads()
-        const gamepad = gamepads[this.gamepadIndex]
-        const buttons = gamepad.buttons
+        this.#updateGamepad()
+        const buttons = this.gamepad.buttons
         const firstButton = buttons[this.firstButtonIndex]
         const secondButton = buttons[this.secondButtonIndex]
 
         if(buttonPressed(firstButton)) return -1
         if(buttonPressed(secondButton)) return 1
         return 0
+    }
+
+    readVelocity() {
+        this.#updateGamepad()
+        const axes = this.gamepad.axes
+        const velocityAxis = axes[ this.axisIndex ]
+        return velocityAxis
+    }
+
+    #updateGamepad() {
+        const gamepads = navigator.getGamepads()
+        this.gamepad = gamepads[ this.gamepadIndex ]
     }
 }
 

@@ -30,10 +30,17 @@ manager.onLoad = function ( ) {
     animate()
 };
 
+let attach = false
+window.addEventListener("keydown", (e) => {
+    if(e.shiftKey) {
+        if(attach == true) attach = false
+        else attach = true
+    }
+})
+
 export function animate() {
     updateCamera() 
     updateTarget()
-    updateRobotBounds()
     
     setTimeout( function() {
 
@@ -50,8 +57,9 @@ export function animate() {
     }
 
     targetBox.setColor( TargetBox.colors.blue )
+    // console.log(attach)
     const inGoal = goalBox.boundingBox.containsBox(targetBox.boundingBox)
-    if(robotEEIntersecting(targetBox.boundingBox) && !inGoal) {
+    if(robotEEIntersecting(targetBox.boundingBox) && attach) {
         targetBox.setColor( TargetBox.colors.green )
 
         const target = storeManager.getStore("Robot").getState().target
@@ -60,7 +68,12 @@ export function animate() {
         targetBox.setRotation( target.rotation )
     }
 
+    if(inGoal) {
+        goalBox.setBorderColor( TargetBox.colors.cyan )
+    }
+
     // updateGamepads()
     // altUpdateGamepads()
     velUpdateGamepads()
+    updateRobotBounds()
 };

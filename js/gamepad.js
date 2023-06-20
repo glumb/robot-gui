@@ -1,6 +1,7 @@
 import { robotController } from "./RobotEEControl";
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { RotaryEncoder } from "./devices";
+import { RobotController } from "./RobotController";
 
 window.addEventListener("gamepadconnected", (e) => {
     const gp = navigator.getGamepads()[e.gamepad.index];
@@ -64,13 +65,14 @@ const endEffectorControlFolder2 = gui.addFolder("End Effector Control Option 2")
 var rotaryEncoders = {}
 rotaryEncoders["select device"] = "select device"
 for(let i = 0; i < 4; i++) {
-    rotaryEncoders["Rotary Encoder " + i] = new RotaryEncoder(0, i*2, i*2 + 1)
+    rotaryEncoders["Rotary Encoder " + i] = new RotaryEncoder(0, i*2 + 1, i*2 + 2, i)
 }
 
 endEffectorControlFolder.close()
+endEffectorControlFolder2.close()
 
 
-console.log(rotaryEncoders)
+// console.log(rotaryEncoders)
 
 const endEffectorControlMapping2 = {
     "x position": {device: rotaryEncoders["Rotary Encoder 0"]},
@@ -160,18 +162,6 @@ export function updateGamepads() {
 
 
 
-let translationalVelocity = {
-    "x": 0,
-    "y": 0,
-    "z": 0,
-}
-
-let rotationalVelocity = {
-    "x": 0,
-    "y": 0,
-    "z": 0,
-}
-
 function updateEE( tVel, rVel ) {
     for(let axis in tVel) {
         robotController.moveAlongAxisAmt( axis, tVel[axis] )
@@ -183,13 +173,58 @@ export function velUpdateGamepads() {
     const gamepad = getGamepad()
     if(!gamepad) return
 
-    console.log(gamepad.axes)
 
-    translationalVelocity["y"] = gamepad.axes[3] * 0.5
-    // translationalVelocity["y"] = gamepad.axes[1] * 0.5
-    // translationalVelocity["z"] = gamepad.axes[2] * 0.5
-    // rotationalVelocity["x"] = gamepad.axes[3] * 0.5
-    // rotationalVelocity["y"] = gamepad.axes[4] * 0.5
-    // rotationalVelocity["z"] = gamepad.axes[5] * 0.5
+    let translationalVelocity = {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+    }
+    
+    let rotationalVelocity = {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+    }
+
+    // console.log(rotaryEncoders["Rotary Encoder 0"].readVelocity())
+
+
+    for(const control in endEffectorControlMapping2) {
+        const mapping = endEffectorControlMapping2[control]
+        const device = mapping.device
+        const axis = control[0]
+        const positionControl = control.includes("position")
+
+        if(device === "select device") continue
+
+        const direction = device.readDirection()
+        const velocity = device.readVelocity()
+
+        if(Math.abs(velocity) < 0.05) {
+            // Don't allow multiple movements per frame
+            if(direction === 0) {
+                mapping["previous"] = direction
+                continue
+            }
+            if(mapping["previous"] !== 0) continue
+            mapping["previous"] = direction
+
+
+            if(positionControl) {
+                robotController.moveAlongAxis(axis, direction)
+            } else {
+                robotController.rotateAroundAxis(axis, direction)
+            }
+            continue
+        } 
+
+        if(positionControl) {
+            translationalVelocity[axis] = velocity
+        } else {
+            rotationalVelocity[axis] = velocity * Math.PI
+        }
+    }
+
+    
     updateEE( translationalVelocity, rotationalVelocity )
 }

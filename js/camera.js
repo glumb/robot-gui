@@ -180,3 +180,4 @@ export function updateCamera() {
     orbitControls.update(0.01)
 }
 export const camera3 = views[2].camera
+export { views }
