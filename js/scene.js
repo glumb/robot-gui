@@ -43,7 +43,7 @@ const axesHelper = new THREE.AxesHelper( 5 );
 scene.add( axesHelper );
 
 // load background and space station
-// loadEnv()
+loadEnv()
 
 /* HELPER FUNCTIONS */
 
@@ -52,8 +52,8 @@ function setupRenderer() {
 	renderer.outputColorSpace = THREE.SRGBColorSpace
 	renderer.setSize(window.innerWidth, window.innerHeight)
 	document.body.appendChild( renderer.domElement );
-	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFShadowMap
+	// renderer.shadowMap.enabled = false;
+	// renderer.shadowMap.type = THREE.PCFShadowMap
 }
 
 function setupLights() {
@@ -63,7 +63,7 @@ function setupLights() {
 
 	// point
 	pointLight.position.set(100, 0, 0)
-	pointLight.castShadow = true
+	// pointLight.castShadow = true
 	pointLight.intensity = 1.3
 	pointLight.shadow.mapSize.set(16384, 16384)
 	pointLight.shadow.radius = 5
@@ -74,8 +74,8 @@ function loadEnv() {
 	loadObject("/ISS.json", {
 		position: [-17.5, -13.375, -1.5], 
 		rotation: [(Math.PI)/2, (Math.PI)/2, 0],
-		castShadow: true,
-		receiveShadow: true,
+		castShadow: false,
+		receiveShadow: false,
 		addTo: scene
 	})
 

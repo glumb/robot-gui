@@ -74,7 +74,7 @@ setupCams()
 setupPostProc()
 
 // camera controls for large view
-const orbitControls = new OrbitControls(views[0].camera, renderer.domElement)
+// const orbitControls = new OrbitControls(views[0].camera, renderer.domElement)
 
 let windowWidth, windowHeight;
 function render() {
@@ -177,7 +177,7 @@ function setupBloomGui() {
 /* EXPORTS */
 export function updateCamera() {
     render()
-    orbitControls.update(0.01)
+    // orbitControls.update(0.01)
 }
 export const camera3 = views[2].camera
 export { views }

@@ -101,8 +101,8 @@ export default class THREERobot {
       loadObject(path, {
         position: [xpos, ypos, zpos],
         rotation: [xrot, yrot, zrot],
-        castShadow: true,
-        receiveShadow: true,
+        castShadow: false,
+        receiveShadow: false,
         addTo: group
       })
 

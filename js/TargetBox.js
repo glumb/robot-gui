@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MeshLine, MeshLineMaterial, MeshLineRaycast } from 'three.meshline';
+import {MeshLine, MeshLineGeometry, MeshLineMaterial} from '@lume/three-meshline'
 
 export class TargetBox {
     static colors = {
@@ -25,15 +25,27 @@ export class TargetBox {
         this.boundingBoxHelper = new THREE.Box3Helper( this.boundingBox, 0xffff00 )
         scene.add( this.boundingBoxHelper )
 
-        // Create border that can change color
-        this.borderGeometry = new THREE.EdgesGeometry( this.geometry ); // or WireframeGeometry( geometry )
-        // this.borderMaterial = new THREE.LineBasicMaterial( { color: TargetBox.colors.yellow } );
-        // this.border = new THREE.LineSegments( this.borderGeometry, this.borderMaterial );
-        this.borderLine = new MeshLine()
-        this.borderLine.setPoints( this.borderGeometry )
-        this.borderMaterial = new MeshLineMaterial({ color: TargetBox.colors.yellow })
-        this.border = new THREE.Mesh( this.borderLine, this.borderMaterial )
-        scene.add( this.border );
+
+
+
+        const points = getCornersOfCube( this.boundingBox.min, this.boundingBox.max )
+        // const points = [ new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1) ]
+        const geometry = new MeshLineGeometry()
+        geometry.setPoints(points)
+        const resolution = new THREE.Vector2( window.innerWidth, window.innerHeight )
+        const material = new MeshLineMaterial({		
+            useMap: false,
+            color: new THREE.Color("white"),
+            opacity: 1,
+            resolution: resolution,
+            sizeAttenuation: false,
+            lineWidth: 10,
+        })
+        this.border = new MeshLine(geometry, material)
+        scene.add( this.border )
+
+
+
 
         // Position in scene
         this.setPosition(this.position)
@@ -46,7 +58,7 @@ export class TargetBox {
     }
 
     setBorderColor( color ) {
-        this.borderMaterial.color.setHex( color ) 
+        this.border.material.color.setHex( color ) 
     }
 
     setPosition( position ) {
@@ -59,7 +71,7 @@ export class TargetBox {
     setRotation( rotation ) {
         this.rotaton = rotation
         this.mesh.rotation.set( rotation.x, rotation.y, rotation.z )
-        this.border.rotation.set( rotation.x, rotation.y, rotation.z )
+        this.rotation.set( rotation.x, rotation.y, rotation.z )
         this.updateBoundingBox()
     }
 
@@ -82,4 +94,48 @@ export class TargetBox {
     hideBorder() {
         this.border.visible = false
     }
+}
+
+function getCornersOfCube( min, max ) {
+    const startingPoints = [ min, max ]
+    let points = []
+    const axes = [ "x", "y", "z" ]
+    for(let i = 0; i < 2; i++) {
+        let j = (i + 1) % 2
+        let p = startingPoints[i]
+        let arr = [ p.x, p.y, p.z ]
+        const point = new THREE.Vector3().fromArray( arr )
+        points.push(point)
+        
+        for(let k = 0; k < 3; k++) {
+            arr[k] = startingPoints[j][ axes[k] ]
+            const point = new THREE.Vector3().fromArray( arr )
+            points.push(point)
+            arr = [ p.x, p.y, p.z ]
+        }
+    }
+
+    points = [ 
+        new THREE.Vector3( min.x, min.y, min.z ), // 1
+        new THREE.Vector3( max.x, min.y, min.z ), // 2
+        new THREE.Vector3( max.x, max.y, min.z ), // 3
+        new THREE.Vector3( min.x, max.y, min.z ), // 4
+        new THREE.Vector3( min.x, min.y, min.z ), // 1
+
+        new THREE.Vector3( min.x, min.y, max.z ), // 5
+        new THREE.Vector3( max.x, min.y, max.z ), // 6
+        new THREE.Vector3( max.x, max.y, max.z ), // 7
+        new THREE.Vector3( min.x, max.y, max.z ), // 8
+        new THREE.Vector3( min.x, min.y, max.z ), // 5
+
+        new THREE.Vector3( max.x, min.y, max.z ), // 6
+        new THREE.Vector3( max.x, min.y, min.z ), // 2
+        new THREE.Vector3( max.x, max.y, min.z ), // 3
+        new THREE.Vector3( max.x, max.y, max.z ), // 7
+        new THREE.Vector3( min.x, max.y, max.z ), // 8
+        new THREE.Vector3( min.x, max.y, min.z ), // 4
+
+    ]
+
+    return points
 }

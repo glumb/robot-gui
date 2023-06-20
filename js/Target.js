@@ -47,12 +47,12 @@ target.add(targetCylinder)
 target.rotation.y = Math.PI / 2
 target.rotation.z = -Math.PI
 target.rotation.order = 'XYZ'
-scene.add(target)
+// scene.add(target)
 
 const targetBB = new THREE.Box3()
 targetCylinder.geometry.computeBoundingBox()
 const helper = new THREE.Box3Helper( targetBB, 0xffff00 )
-scene.add( helper );
+// scene.add( helper );
 
 store.listen([() => store.getStore('Robot').getState().target, state => state], (targetT, state) => {
   if (state.followTarget) {

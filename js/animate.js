@@ -16,10 +16,12 @@ import { targetBB } from "./Target";
 const position = new THREE.Vector3(1, 2, 3)
 const rotation = new THREE.Vector3(0, 0, (Math.PI) / 2)
 const targetBox = new TargetBox(position, rotation, scene)
+targetBox.hideBorder()
 
 const position1 = new THREE.Vector3(3, 3, 3)
 const rotation1 = new THREE.Vector3(0, 0, (Math.PI) / 2)
-const goalBox = new TargetBox(position1, rotation1, scene, 2, TargetBox.colors.green)
+const goalBox = new TargetBox(position1, rotation1, scene, 2)
+goalBox.setBorderColor( TargetBox.colors.green )
 goalBox.hideMesh()
 // goalBox.setBoundColor(TargetBox.colors.green)
 
@@ -37,6 +39,12 @@ window.addEventListener("keydown", (e) => {
         else attach = true
     }
 })
+
+const bounds = {
+    x: { min: -4, max: 4},
+    y: { min: 3, max: 4},
+    z: { min: -4, max: 4}
+}
 
 export function animate() {
     updateCamera() 
@@ -68,8 +76,12 @@ export function animate() {
         targetBox.setRotation( target.rotation )
     }
 
+    goalBox.setBorderColor( TargetBox.colors.green )
     if(inGoal) {
         goalBox.setBorderColor( TargetBox.colors.cyan )
+        if(!attach) {
+            targetBox.setPosition( getRandomPosition( bounds ) )
+        }
     }
 
     // updateGamepads()
@@ -77,3 +89,15 @@ export function animate() {
     velUpdateGamepads()
     updateRobotBounds()
 };
+
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function getRandomPosition( bounds ) {
+    const x = getRandomArbitrary( bounds.x.min, bounds.x.max )
+    const y = getRandomArbitrary( bounds.y.min, bounds.y.max )
+    const z = getRandomArbitrary( bounds.z.min, bounds.z.max )
+
+    return new THREE.Vector3( x, y, z )
+}
