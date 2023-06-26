@@ -1,5 +1,5 @@
 export class RobotController {
-    static #DEG_TO_RAD = Math.PI / 180
+    static DEG_TO_RAD = Math.PI / 180
     constructor(robotStore, transStep = 0.25, rotStep = (Math.PI)/36) {
         // Allows us to get and set robot state
         this.robotStore = robotStore
@@ -19,7 +19,7 @@ export class RobotController {
     }
 
     setRotStepDeg( angleDeg ) {
-        this.rotStep = angleDeg * DEG_TO_RAD
+        this.rotStep = angleDeg * RobotController.DEG_TO_RAD
     }
 
     setJointAngle( jointNumber, angleRad ) {

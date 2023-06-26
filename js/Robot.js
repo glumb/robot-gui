@@ -189,6 +189,8 @@ robotStore.action('ROBOT_CHANGE_ANGLES', (state, angles) => {
   let angleKeys = Object.keys(angles)
   let limitKeys = Object.keys(state.jointLimits)
 
+  
+
   for(let i = 0; i < angleKeys.length; i++) {
     let angleKey = Object.keys(angles)[i]
     let limitKey = Object.keys(state.jointLimits)[i]

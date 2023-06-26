@@ -79,6 +79,46 @@ function makeBasicDevices( deviceMappings, DeviceClass ) {
 
 /* HANDLE CONTROLS */
 
+function handleIncrementalControls( mode ) {
+    const EEincrementalControls = controls[ mode + " Controls"]["Incremental Controls"]
+    for(let controlName in EEincrementalControls) {
+
+        // handle step size control
+        if(controlName.includes("step size")) {
+            const newStep = EEincrementalControls[controlName]
+            handleStepSize( mode, newStep )
+            continue
+        }
+
+        const buttonName = EEincrementalControls[controlName]
+        if( buttonName === "none" ) continue
+
+        // handle other controls
+        var controlType = mode.toLowerCase()
+        if( controlName.includes("position")) controlType += " position"
+        else if( controlName.includes("position")) controlType += " rotation"
+
+        handleIncrementalControl( controlType, controlName, buttonName )
+    }
+}
+
+function handleStepSize( mode, newStep ) {
+    var currentStep
+
+    if(mode === "Joint") currentStep = robotController.rotStep
+    else if (mode === "End Effector") currentStep = robotController.transStep
+    else {
+        console.error("Invalid mode")
+    }
+
+    if( currentStep === newStep ) return
+
+    if( mode === "Joint" ) robotController.setRotStepDeg( newStep )
+    else robotController.setTransStep( newStep )
+
+
+}
+ 
 
 function handleIncrementalControl( controlType, controlName, buttonName ) {
     const button = getButton( buttonName )
@@ -88,13 +128,14 @@ function handleIncrementalControl( controlType, controlName, buttonName ) {
     if( controlName.includes("increment") ) direction = 1
     else if ( controlName.includes("decrement" )) direction = -1
     else {
-        console.warn( "Invalid contol name" )
+        console.warn( "Invalid control name" )
         return
     }
 
     // determine id
     const nameArray = controlName.split(" ")
     var ID
+
     if( controlType === "joint" ) ID = nameArray[2]
     else if ( controlType.includes("end effector")) ID = nameArray[1].toLowerCase()
     else {
@@ -103,7 +144,7 @@ function handleIncrementalControl( controlType, controlName, buttonName ) {
     }
 
     if( button.pressed ) {
-        console.log(ID)
+        console.log(buttonName)
         increment( controlType, ID, direction )
     }
 }
@@ -143,28 +184,8 @@ export default function updateControls() {
 
     
     // handle end effector incremental controls
-    const EEincrementalControls = controls["End Effector Controls"]["Incremental Controls"]
-    for(let controlName in EEincrementalControls) {
-
-        // handle step size control
-        if(controlName.includes("step size")) {
-            const currentStep = robotController.transStep
-            const newStep = EEincrementalControls["step size"]
-
-            if(currentStep !== newStep) robotController.setTransStep(newStep)
-            continue
-        }
-
-        const buttonName = EEincrementalControls[controlName]
-        if( buttonName === "none" ) continue
-
-        // handle other controls
-        var controlType = "end effector"
-        if( controlName.includes("position")) controlType += " position"
-        else controlType += " rotation"
-
-        handleIncrementalControl( controlType, controlName, buttonName )
-    }
+    handleIncrementalControls("End Effector")
+    handleIncrementalControls("Joint")
 }
 
 
