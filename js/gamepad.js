@@ -31,6 +31,18 @@ window.addEventListener("gamepadconnected", (e) => {
 });
 
 
+// update all controls
+export default function updateControls() {
+    const gamepad = getGamepad()
+    if(!gamepad) return
+
+    
+    // handle end effector incremental controls
+    handleIncrementalControls("End Effector")
+    handleIncrementalControls("Joint")
+}
+
+
 
 /* CREATE DEVICES */
 
@@ -79,19 +91,19 @@ function makeBasicDevices( deviceMappings, DeviceClass ) {
 
 /* HANDLE CONTROLS */
 
-function handleIncrementalControls( mode ) {
-    const EEincrementalControls = controls[ mode + " Controls"]["Incremental Controls"]
-    for(let controlName in EEincrementalControls) {
+const controlStates = {}
 
+function handleIncrementalControls( mode ) {
+    const incrementalControls = controls[ mode + " Controls"]["Incremental Controls"]
+    for(let controlName in incrementalControls) {
         // handle step size control
         if(controlName.includes("step size")) {
-            const newStep = EEincrementalControls[controlName]
+            const newStep = incrementalControls[controlName]
             handleStepSize( mode, newStep )
             continue
         }
 
-        const buttonName = EEincrementalControls[controlName]
-        if( buttonName === "none" ) continue
+        const buttonName = incrementalControls[controlName]
 
         // handle other controls
         var controlType = mode.toLowerCase()
@@ -119,8 +131,8 @@ function handleStepSize( mode, newStep ) {
 
 }
  
-
 function handleIncrementalControl( controlType, controlName, buttonName ) {
+    if( buttonName === "none" ) return
     const button = getButton( buttonName )
 
     // determine direction
@@ -143,13 +155,15 @@ function handleIncrementalControl( controlType, controlName, buttonName ) {
         return
     }
 
-    if( button.pressed ) {
-        console.log(buttonName)
+    if( button.pressed) {
+        if(controlStates[controlName] !== false) return
+        
         increment( controlType, ID, direction )
+        controlStates[controlName] = true
+    } else {
+        controlStates[controlName] = false
     }
 }
-
-
 
 // helpers for selecting correct control function
 function increment( controlType, ID, direction ) {
@@ -174,18 +188,6 @@ function incrementAmt ( controlType, ID, amt ) {
     } else {
         console.error("Invalid control type")
     }
-}
-
-
-// update all controls
-export default function updateControls() {
-    const gamepad = getGamepad()
-    if(!gamepad) return
-
-    
-    // handle end effector incremental controls
-    handleIncrementalControls("End Effector")
-    handleIncrementalControls("Joint")
 }
 
 
