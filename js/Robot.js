@@ -140,7 +140,6 @@ robotStore.action('ROBOT_CHANGE_TARGET', (state, data) => {
   }
 
   if(!invalid) {
-    // console.log(data.position)
     return Object.assign({}, state, {
       target: {
         position: Object.assign({}, data.position),

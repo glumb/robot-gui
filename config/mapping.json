@@ -11,7 +11,7 @@
         "Rotary Encoder 1": {
             "Buttons": {
                 "clockwise": 5,
-                "counter-clockwise":44,
+                "counter-clockwise": 4,
                 "button": 3
             },
             "velocity axis": 1

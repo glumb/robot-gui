@@ -1,8 +1,6 @@
 {
     "End Effector Controls": {
         "Axis Controls": {
-            "throttle": 1,
-            "throttle control": "none",
             "X position": "none",
             "Y position": "none",
             "Z position": "none",
@@ -28,8 +26,6 @@
     },
     "Joint Controls": {
         "Angle Controls": {
-            "throttle": 1,
-            "throttle control": "none",
             "joint 0 angle": "none",
             "joint 1 angle": "none",
             "joint 2 angle": "none",
@@ -52,14 +48,5 @@
             "increment joint 5 angle": "none",
             "decrement joint 5 angle": "none"
         }
-    },
-    "Gripper Controls": {
-        "grasp": "none",
-        "ungrasp": "none",
-        "grasp toggle": "none"
-    },
-    "Reference Frame": {
-        "reference frame": "world",
-        "toggle reference frame": "none"
     }
 }

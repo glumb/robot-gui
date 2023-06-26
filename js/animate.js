@@ -47,7 +47,6 @@ const bounds = {
 }
 
 export function animate() {
-    updateCamera() 
     updateTarget()
 
     targetCylinder.material.color.setHex(0xff0000)
@@ -79,6 +78,7 @@ export function animate() {
 
     updateControls()
     updateRobotBounds()
+    updateCamera()
 
     setTimeout( function() {
 
