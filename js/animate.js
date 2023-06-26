@@ -7,7 +7,7 @@ import { updateCamera } from "./camera";
 import { robotEEIntersecting, updateRobotBounds } from "./RobotTHREE";
 import { robotIntersecting } from "./RobotTHREE";
 import { targetCylinder } from "./Target";
-import { altUpdateGamepads, updateGamepads, velUpdateGamepads } from "./gamepad";
+import updateControls from "./gamepad";
 import { TargetBox } from "./targetBox";
 
 import { targetBB } from "./Target";
@@ -49,12 +49,6 @@ const bounds = {
 export function animate() {
     updateCamera() 
     updateTarget()
-    
-    setTimeout( function() {
-
-        requestAnimationFrame( animate );
-
-    }, 1000 / 60 );
 
     targetCylinder.material.color.setHex(0xff0000)
     if(robotIntersecting(targetBB)) {
@@ -65,7 +59,6 @@ export function animate() {
     }
 
     targetBox.setColor( TargetBox.colors.blue )
-    // console.log(attach)
     const inGoal = goalBox.boundingBox.containsBox(targetBox.boundingBox)
     if(robotEEIntersecting(targetBox.boundingBox) && attach) {
         targetBox.setColor( TargetBox.colors.green )
@@ -84,10 +77,14 @@ export function animate() {
         }
     }
 
-    // updateGamepads()
-    // altUpdateGamepads()
-    velUpdateGamepads()
+    updateControls()
     updateRobotBounds()
+
+    setTimeout( function() {
+
+        requestAnimationFrame( animate );
+
+    }, 1000 / 60 );
 };
 
 function getRandomArbitrary(min, max) {

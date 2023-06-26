@@ -43,7 +43,7 @@ const axesHelper = new THREE.AxesHelper( 5 );
 scene.add( axesHelper );
 
 // load background and space station
-loadEnv()
+// loadEnv()
 
 /* HELPER FUNCTIONS */
 
@@ -71,7 +71,7 @@ function setupLights() {
 }
 
 function loadEnv() {
-	loadObject("/ISS.json", {
+	loadObject("ISS.json", {
 		position: [-17.5, -13.375, -1.5], 
 		rotation: [(Math.PI)/2, (Math.PI)/2, 0],
 		castShadow: false,

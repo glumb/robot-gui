@@ -1,0 +1,41 @@
+{
+    "Rotary Encoders": {
+        "Rotary Encoder 0": {
+            "Buttons": {
+                "clockwise": 0,
+                "counter-clockwise": 1,
+                "button": 2
+            },
+            "velocity axis": 0
+        },
+        "Rotary Encoder 1": {
+            "Buttons": {
+                "clockwise": 3,
+                "counter-clockwise": 4,
+                "button": 6
+            },
+            "velocity axis": 1
+        },
+        "Rotary Encoder 2": {
+            "Buttons": {
+                "clockwise": 7,
+                "counter-clockwise": 8,
+                "button": 9
+            },
+            "velocity axis": 2
+        }
+    },
+    "Buttons": {
+        "Button 0": 10,
+        "Button 1": 11,
+        "Button 2": 13
+    },
+    "Switches": {
+        "Switch 0": 14
+    },
+    "Potentiometers": {
+        "Linear Potentiometer 0": 8,
+        "Linear Potentiometer 1": 3,
+        "Linear Potentiometer 2": 4
+    }
+}

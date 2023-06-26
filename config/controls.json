@@ -1,0 +1,65 @@
+{
+    "End Effector Controls": {
+        "Axis Controls": {
+            "throttle": 1,
+            "throttle control": "none",
+            "X position": "none",
+            "Y position": "none",
+            "Z position": "none",
+            "X rotation": "none",
+            "Y rotation": "none",
+            "Z rotation": "none"
+        },
+        "Incremental Controls": {
+            "step size": 0.25,
+            "increment X position": "none",
+            "decrement X position": "none",
+            "increment Y position": "none",
+            "decrement Y position": "none",
+            "increment Z position": "none",
+            "decrement Z position": "none",
+            "increment X rotation": "none",
+            "decrement X rotation": "none",
+            "increment Y rotation": "none",
+            "decrement Y rotation": "none",
+            "increment Z rotation": "none",
+            "decrement Z rotation": "none"
+        }
+    },
+    "Joint Controls": {
+        "Angle Controls": {
+            "throttle": 1,
+            "throttle control": "none",
+            "joint 0 angle": "none",
+            "joint 1 angle": "none",
+            "joint 2 angle": "none",
+            "joint 3 angle": "none",
+            "joint 4 angle": "none",
+            "joint 5 angle": "none"
+        },
+        "Incremental Controls": {
+            "step size (degrees)": 10,
+            "increment joint 0 angle": "none",
+            "decrement joint 0 angle": "none",
+            "increment joint 1 angle": "none",
+            "decrement joint 1 angle": "none",
+            "increment joint 2 angle": "none",
+            "decrement joint 2 angle": "none",
+            "increment joint 3 angle": "none",
+            "decrement joint 3 angle": "none",
+            "increment joint 4 angle": "none",
+            "decrement joint 4 angle": "none",
+            "increment joint 5 angle": "none",
+            "decrement joint 5 angle": "none"
+        }
+    },
+    "Gripper Controls": {
+        "grasp": "none",
+        "ungrasp": "none",
+        "grasp toggle": "none"
+    },
+    "Reference Frame": {
+        "reference frame": "world",
+        "toggle reference frame": "none"
+    }
+}

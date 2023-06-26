@@ -63,7 +63,7 @@ export default class THREERobot {
       let xrot = (Math.PI)/2
       let yrot = 0
       var zrot = 0
-      var path = "/robot_arm_" + jointNumber + ".json"
+      var path = "robot_arm_" + jointNumber + ".json"
 
       switch (jointNumber) {
         case 0:

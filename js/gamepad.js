@@ -1,8 +1,20 @@
 import { robotController } from "./RobotEEControl";
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { RotaryEncoder } from "./devices";
+import { Button } from "./devices";
+import { Axis } from "./devices"
 import { RobotController } from "./RobotController";
+import { controls } from "./gui";
 
+import mapping from "../config/mapping.json" assert { type: "json" }
+
+
+// Store devices, can't be initialized until gamepad connected
+const devices = {}
+
+// Add listener for gamepad to be connected
+var GAMEPAD_INDEX;
+var THROTTLE;
 window.addEventListener("gamepadconnected", (e) => {
     const gp = navigator.getGamepads()[e.gamepad.index];
     console.log(
@@ -12,7 +24,151 @@ window.addEventListener("gamepadconnected", (e) => {
       gp.buttons.length,
       gp.axes.length
     );
+
+    GAMEPAD_INDEX = gp.index
+    makeDevices()
+    console.log(devices)
 });
+
+
+
+/* CREATE DEVICES */
+
+function makeDevices() {
+    devices[ "Rotary Encoders" ] = makeRotaryEncoders(),
+    devices[ "Buttons" ] = makeBasicDevices( mapping[ "Buttons" ], Button ),
+    devices[ "Switches" ] = makeBasicDevices( mapping[ "Switches" ], Button ),
+    devices[ "Potentiometers" ] = makeBasicDevices( mapping[ "Potentiometers"], Axis )
+}
+
+function makeRotaryEncoders() {
+    const rotaryEncoders = {}
+    
+    const rotaryEncoderMappings = mapping[ "Rotary Encoders" ]
+    for( let rotaryEncoderName in rotaryEncoderMappings ) {
+        const rotaryEncoderMapping = rotaryEncoderMappings[ rotaryEncoderName ]
+        const buttons = rotaryEncoderMapping[ "Buttons" ]
+
+        // Get the IDs of all buttons
+        const bId = []
+        for(let buttonName in buttons ) {
+            bId.push(buttons[ buttonName ])
+        }
+
+        const axis = rotaryEncoderMapping[ "velocity axis" ]
+        const rotaryEncoder = new RotaryEncoder( GAMEPAD_INDEX, bId[0], bId[1], bId[2], axis)
+        rotaryEncoders[ rotaryEncoderName ] = rotaryEncoder
+    }
+
+    return rotaryEncoders
+}
+
+function makeBasicDevices( deviceMappings, DeviceClass ) {
+    const devices = {}
+
+    for( let deviceName in deviceMappings ) {
+        const deviceIndex = deviceMappings[ deviceName ]
+        const device = new DeviceClass( GAMEPAD_INDEX, deviceIndex )
+        devices[ deviceName ] = device
+    }
+
+    return devices
+}
+
+
+
+/* HANDLE CONTROLS */
+
+
+function handleIncrementalControl( controlType, controlName, buttonName ) {
+    const button = getButton( buttonName )
+
+    // determine direction
+    var direction = 0
+    if( controlName.includes("increment") ) direction = 1
+    else if ( controlName.includes("decrement" )) direction = -1
+    else {
+        console.warn( "Invalid contol name" )
+        return
+    }
+
+    // determine id
+    const nameArray = controlName.split(" ")
+    var ID
+    if( controlType === "joint" ) ID = nameArray[2]
+    else if ( controlType.includes("end effector")) ID = nameArray[1].toLowerCase()
+    else {
+        console.warn( "Invalid control type" )
+        return
+    }
+
+    if( button.pressed ) {
+        console.log(ID)
+        increment( controlType, ID, direction )
+    }
+}
+
+
+
+// helpers for selecting correct control function
+function increment( controlType, ID, direction ) {
+    if( controlType === "joint" ) {
+        robotController.moveJoint( ID, direction )
+    } else if( controlType === "end effector position" ) {
+        robotController.moveAlongAxis( ID, direction )
+    } else if( controlType === "end effector rotation") {
+        robotController.rotateAroundAxis( ID, direction )
+    } else {
+        console.error("Invalid control type")
+    }
+}
+
+function incrementAmt ( controlType, ID, amt ) {
+    if( controlType === "joint" ) {
+        robotController.moveJointAmt( ID, amt )
+    } else if( controlType === "end effector position" ) {
+        robotController.moveAlongAxisAmt( ID, amt )
+    } else if( controlType === "end effector rotation") {
+        robotController.rotateAroundAxisAmt( ID, amt )
+    } else {
+        console.error("Invalid control type")
+    }
+}
+
+
+// update all controls
+export default function updateControls() {
+    const gamepad = getGamepad()
+    if(!gamepad) return
+
+    
+    // handle end effector incremental controls
+    const EEincrementalControls = controls["End Effector Controls"]["Incremental Controls"]
+    for(let controlName in EEincrementalControls) {
+
+        // handle step size control
+        if(controlName.includes("step size")) {
+            const currentStep = robotController.transStep
+            const newStep = EEincrementalControls["step size"]
+
+            if(currentStep !== newStep) robotController.setTransStep(newStep)
+            continue
+        }
+
+        const buttonName = EEincrementalControls[controlName]
+        if( buttonName === "none" ) continue
+
+        // handle other controls
+        var controlType = "end effector"
+        if( controlName.includes("position")) controlType += " position"
+        else controlType += " rotation"
+
+        handleIncrementalControl( controlType, controlName, buttonName )
+    }
+}
+
+
+/* HELPER FUNCTIONS */
 
 function buttonPressed(b) {
     if (typeof b === "object") {
@@ -21,71 +177,25 @@ function buttonPressed(b) {
     return b === 1.0;
 }
 
-let buttonMapping = {
-    "choose a control": -1,
-    "rotary encoder 0 clockwise": 0,
-    "rotary encoder 0 counterclockwise": 1,
-    "rotary encoder 1 clockwise": 2,
-    "rotary encoder 1 counterclockwise": 3,
-    "rotary encoder 2 clockwise": 4,
-    "rotary encoder 2 counterclockwise": 5,
-    "rotary encoder 3 clockwise": 6,
-    "rotary encoder 3 counterclockwise": 7,
+function updateEE( tVel, rVel ) {
+    for(let axis in tVel) {
+        robotController.moveAlongAxisAmt( axis, tVel[axis] )
+        robotController.rotateAroundAxis( axis, rVel[axis] )
+    }
 }
 
-const gui = new GUI( { width: 400 } )
-const endEffectorControlFolder = gui.addFolder("End Effector Control Option 1")
-
-let endEffectorControlMapping = {
-    "increment x position": {func: () => robotController.incrementPosition("x"), button: 0},
-    "decrement x position": {func: () => robotController.decrementPosition("x"), button: 1},
-    "increment y position": {func: () => robotController.incrementPosition("y"), button: 2},
-    "decrement y position": {func: () => robotController.decrementPosition("y"), button: 3},
-    "increment z position": {func: () => robotController.incrementPosition("z"), button: 4},
-    "decrement z position": {func: () => robotController.decrementPosition("z"), button: 5},
-    "increment x Rotation": {func: () => robotController.incrementRotation("x"), button: 6},
-    "decrement x Rotation": {func: () => robotController.decrementRotation("x"), button: 7},
-    "increment y Rotation": {func: () => robotController.incrementRotation("y"), button: -1},
-    "decrement y Rotation": {func: () => robotController.decrementRotation("y"), button: -1},
-    "increment z Rotation": {func: () => robotController.incrementRotation("z"), button: -1},
-    "decrement z Rotation": {func: () => robotController.decrementRotation("z"), button: -1},
-}
-
-
-
-for(let control in endEffectorControlMapping) {
-    let mapping = endEffectorControlMapping[control]
-    endEffectorControlFolder.add( mapping, "button", buttonMapping ).name(control)
-}
-
-
-
-
-const endEffectorControlFolder2 = gui.addFolder("End Effector Control Option 2")
-var rotaryEncoders = {}
-rotaryEncoders["select device"] = "select device"
-for(let i = 0; i < 4; i++) {
-    rotaryEncoders["Rotary Encoder " + i] = new RotaryEncoder(0, i*2 + 1, i*2 + 2, i)
-}
-
-endEffectorControlFolder.close()
-endEffectorControlFolder2.close()
-
-
-// console.log(rotaryEncoders)
-
-const endEffectorControlMapping2 = {
-    "x position": {device: rotaryEncoders["Rotary Encoder 0"]},
-    "y position": {device: rotaryEncoders["Rotary Encoder 1"]},
-    "z position": {device: rotaryEncoders["Rotary Encoder 2"]},
-    "x rotation": {device: rotaryEncoders["Rotary Encoder 3"]},
-    "y rotation": {device: "select device"},
-    "z rotation": {device: "select device"},
-}
-
-for(let control in endEffectorControlMapping2) {
-    let mapping = endEffectorControlMapping2[control]
-    endEffectorControlFolder2.add( mapping, "device", rotaryEncoders ).name(control)
+function getButton( buttonName ) {
+    if( buttonName.includes( "Rotary Encoder" )) {
+        // Rotary Encoder name format: "Rotary Encoder # button name"
+        var nameArray = buttonName.split(" ")
+        const num = nameArray[2]
+        const encoderName = "Rotary Encoder " + num
+        buttonName = nameArray[3]
+        
+        return devices["Rotary Encoders"][encoderName].buttons[buttonName]
+    } else {
+        return devices["Buttons"][buttonName]
+    }
 }
 
 function getGamepad() {
@@ -101,130 +211,4 @@ function getGamepad() {
     }
 
     return gamepad
-}
-
-
-export function altUpdateGamepads() {
-    const gamepad = getGamepad()
-    if(!gamepad) return
-    
-
-    // console.log(endEffectorControlMapping2["x position"]["previous"])
-
-    for(const control in endEffectorControlMapping2) {
-        const mapping = endEffectorControlMapping2[control]
-        const axis = control[0]    // x, y, or z
-        const positionControl = control.includes("position")  // true or false
-
-       
-
-        if(mapping.device === "select device") continue
-        const direction = mapping.device.readDirection()     // -1, 0, or 1
-        if(direction === 0) {
-            mapping["previous"] = direction
-            continue
-        }
-        // if(mapping["previous"] !== 0) continue
-        mapping["previous"] = direction
-
-        if(positionControl) {
-            robotController.moveAlongAxis(axis, direction)
-        } else {
-            robotController.rotateAroundAxis(axis, direction)
-        }
-    }
-}
-
-
-export function updateGamepads() {
-    const gamepads = navigator.getGamepads()
-    if(!gamepads) return
-
-    const gamepad = gamepads[0]
-    let buttons
-    try {
-        buttons = gamepad.buttons
-    } catch ( err ) {
-        console.log(err)
-        return
-    }
-
-    for(let control in endEffectorControlMapping) {
-        let mapping = endEffectorControlMapping[control]
-        
-        if(mapping.button === -1) continue
-        if(buttonPressed(buttons[mapping.button])) {
-            // console.log(control)
-            mapping.func()
-        }
-    }
-}
-
-
-
-function updateEE( tVel, rVel ) {
-    for(let axis in tVel) {
-        robotController.moveAlongAxisAmt( axis, tVel[axis] )
-        robotController.rotateAroundAxis( axis, rVel[axis] )
-    }
-}
-
-export function velUpdateGamepads() {
-    const gamepad = getGamepad()
-    if(!gamepad) return
-
-
-    let translationalVelocity = {
-        "x": 0,
-        "y": 0,
-        "z": 0,
-    }
-    
-    let rotationalVelocity = {
-        "x": 0,
-        "y": 0,
-        "z": 0,
-    }
-
-    // console.log(rotaryEncoders["Rotary Encoder 0"].readVelocity())
-
-
-    for(const control in endEffectorControlMapping2) {
-        const mapping = endEffectorControlMapping2[control]
-        const device = mapping.device
-        const axis = control[0]
-        const positionControl = control.includes("position")
-
-        if(device === "select device") continue
-
-        const direction = device.readDirection()
-        const velocity = device.readVelocity()
-
-        if(Math.abs(velocity) < 0.05) {
-            // Don't allow multiple movements per frame
-            if(direction === 0) {
-                mapping["previous"] = direction
-                continue
-            }
-            if(mapping["previous"] !== 0) continue
-            mapping["previous"] = direction
-
-
-            if(positionControl) {
-                robotController.moveAlongAxis(axis, direction)
-            } else {
-                robotController.rotateAroundAxis(axis, direction)
-            }
-            continue
-        } 
-
-        if(positionControl) {
-            translationalVelocity[axis] = velocity
-        } else {
-            rotationalVelocity[axis] = velocity * Math.PI
-        }
-    }
-
-    
-    updateEE( translationalVelocity, rotationalVelocity )
 }

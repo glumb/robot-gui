@@ -45,9 +45,13 @@ export class RobotController {
     decrementRotation( axis ) { this.rotateAroundAxis( axis, -1 ) }
 
     moveJoint( jointNumber, direction ) {
-        const key = "A" + jointNumber
         const step = this.rotStep * direction
-        const angles = incrementDictVal( this.angles, key, step )
+        this.moveJointAmt( jointNumber, step )
+    }
+
+    moveJointAmt( jointNumber, amt ) {
+        const key = "A" + jointNumber
+        const angles = incrementDictVal( this.angles, key, amt )
         this.#setRobotAngles( angles )
     }
 

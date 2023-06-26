@@ -41,3 +41,6 @@ jspm_packages
 .DS_Store
 
 public/lol.mp3
+
+# vite build
+dist
