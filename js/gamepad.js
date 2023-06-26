@@ -88,10 +88,23 @@ function makeBasicDevices( deviceMappings, DeviceClass ) {
 }
 
 
+/* HANDLE AXIS CONTROLS */
 
-/* HANDLE CONTROLS */
+function incrementAmt ( controlType, ID, amt ) {
+    if( controlType === "joint" ) {
+        robotController.moveJointAmt( ID, amt )
+    } else if( controlType === "end effector position" ) {
+        robotController.moveAlongAxisAmt( ID, amt )
+    } else if( controlType === "end effector rotation") {
+        robotController.rotateAroundAxisAmt( ID, amt )
+    } else {
+        console.error("Invalid control type")
+    }
+}
 
-const controlStates = {}
+
+
+/* HANDLE CONTROLS INCREMENTAL */
 
 function handleIncrementalControls( mode ) {
     const incrementalControls = controls[ mode + " Controls"]["Incremental Controls"]
@@ -131,6 +144,8 @@ function handleStepSize( mode, newStep ) {
 
 }
  
+const incrementalControlStates = {}
+
 function handleIncrementalControl( controlType, controlName, buttonName ) {
     if( buttonName === "none" ) return
     const button = getButton( buttonName )
@@ -155,15 +170,25 @@ function handleIncrementalControl( controlType, controlName, buttonName ) {
         return
     }
 
-    if( button.pressed) {
-        if(controlStates[controlName] !== false) return
+    incrementOnce( controlType, ID, direction, button.pressed)
+}
+
+// increment once and don't increment again until button is unpressed
+function incrementOnce( controlType, ID, direction, buttonPressed ) {
+    var directionWord = "increment"
+    if(direction === -1) directionWord = "decrement"
+
+    const controlName = directionWord + " " + controlType + " " + ID
+    console.log(controlName)
+    if( buttonPressed) {
+        if(incrementalControlStates[controlName] !== false) return
         
         increment( controlType, ID, direction )
-        controlStates[controlName] = true
+        incrementalControlStates[controlName] = true
     } else {
-        controlStates[controlName] = false
+        incrementalControlStates[controlName] = false
     }
-}
+} 
 
 // helpers for selecting correct control function
 function increment( controlType, ID, direction ) {
@@ -173,18 +198,6 @@ function increment( controlType, ID, direction ) {
         robotController.moveAlongAxis( ID, direction )
     } else if( controlType === "end effector rotation") {
         robotController.rotateAroundAxis( ID, direction )
-    } else {
-        console.error("Invalid control type")
-    }
-}
-
-function incrementAmt ( controlType, ID, amt ) {
-    if( controlType === "joint" ) {
-        robotController.moveJointAmt( ID, amt )
-    } else if( controlType === "end effector position" ) {
-        robotController.moveAlongAxisAmt( ID, amt )
-    } else if( controlType === "end effector rotation") {
-        robotController.rotateAroundAxisAmt( ID, amt )
     } else {
         console.error("Invalid control type")
     }

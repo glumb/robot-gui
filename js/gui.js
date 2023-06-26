@@ -99,10 +99,13 @@ function getButtonNames( mapping ) {
     for(let rotaryEncoderName in mapping["Rotary Encoders"]) {
         const rotaryEncoderMapping = mapping["Rotary Encoders"][rotaryEncoderName]
 
-        for(let buttonName in rotaryEncoderMapping["Buttons"]) {
-            const name = rotaryEncoderName + " " + buttonName
-            buttonNames.push(name)
-        }
+        // for(let buttonName in rotaryEncoderMapping["Buttons"]) {
+        //     const name = rotaryEncoderName + " " + buttonName
+        //     buttonNames.push(name)
+        // }
+
+        const name = rotaryEncoderName + " button"
+        buttonNames.push(name)
     }
 
     return buttonNames
